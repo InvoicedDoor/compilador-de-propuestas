@@ -1,0 +1,125 @@
+.main-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    margin-top: 2rem;
+    flex: 1;
+}
+
+.input-container {
+    width: 40vw;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.text-input,
+.long-text-input {
+    width: 100%;
+    background-color: #333;
+    border: 1px solid #444;
+    color: #e0e0e0;
+    padding: 0.6rem;
+    border-radius: 6px;
+}
+
+.text-input:focus,
+.long-text-input:focus {
+    outline: none;
+    border-color: #4caf50;
+}
+
+.files-container {
+    display: flex;
+    gap: 10px;
+    width: 40vw;
+    overflow-x: auto;
+}
+
+.file-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 90px;
+}
+
+.file {
+    width: 70px;
+    height: 70px;
+    object-fit: contain;
+}
+
+.file-name {
+    font-size: 11px;
+    width: 100%;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.drop-area {
+    width: 100%;
+    height: 150px;
+    border: 2px dashed #555;
+    border-radius: 8px;
+    background-color: #2b2b2b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9e9e9e;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.drop-area.dragover {
+    background-color: #333;
+    border-color: #4caf50;
+}
+
+.upload-button {
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.upload-button:hover {
+    background-color: #43a047;
+}
+
+.footer {
+    margin-top: 3rem;
+    background-color: #2b2b2b;
+    padding: 1rem;
+    display: flex;
+    justify-content: center;
+}
+
+.footer-logo {
+    width: 100px;
+}
+
+.leanovation-sign {
+    color: #9e9e9e;
+    font-size: 0.8rem;
+}
+
+@media (max-width: 768px) {
+
+    .input-container,
+    .files-container {
+        width: 90%;
+    }
+}
+/* 
+@media (max-width: 1080px) {
+    .user-identification {
+        width: 15rem;
+    }
+} */

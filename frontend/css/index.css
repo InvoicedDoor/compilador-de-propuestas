@@ -1,0 +1,104 @@
+.screen-display {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.image-container {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+.project-cards-container {
+    width: 90vw;
+    height: auto;
+    overflow: scroll;
+    padding: 10px;
+    display: grid;
+    overflow-y: auto;
+    grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
+    justify-content: center;
+    gap: 10px;
+}
+
+.card {
+    height: 25rem;
+    width: 20rem;
+    margin-top: 10px;
+    border-radius: 10px;
+    cursor: pointer;
+    background-color: #333;
+}
+
+.project-data {
+    margin: 1rem;
+    height: 30%;
+}
+
+.project-title {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+.project-description {
+    height: 100%;
+}
+
+.project-main-image {
+    width: 18rem;
+    height: 12rem;
+    border-radius: 10px;
+    margin-top: 1vh;
+    background-color: #777;
+}
+
+.card-footer {
+    width: 100%;
+    height: 10%;
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+}
+
+.edit-card-button {
+    background-color: #777;
+    width: 7rem;
+    height: 2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bolder;
+    font-size: larger;
+    border-radius: 15px;
+}
+
+.edit-card-button:hover {
+    background-color: rgb(227, 117, 15);
+    transition: 0.5s;
+}
+
+.delete-card-button {
+    background-color: #222;
+    width: 7rem;
+    height: 2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bolder;
+    font-size: larger;
+    border-radius: 15px;
+}
+
+.delete-card-button:hover {
+    background-color: #ca1414;
+    transition: 0.5s;
+}
+
+.card:hover {
+    transform: scale(1.05);
+    background-color: #444;
+}

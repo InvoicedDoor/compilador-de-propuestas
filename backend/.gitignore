@@ -1,0 +1,9 @@
+# Archivos
+.env
+show_routes.py
+
+# Carpetas
+venv/
+__pycache__/
+files/
+logs/

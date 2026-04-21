@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/css/add-proposal.css">
+    <link rel="stylesheet" href="/css/general-style.css">
+    <link rel="stylesheet" href="/css/navbar.css">
+    <link rel="stylesheet" href="/css/modal.css">
+    <link rel="icon" href="/icons/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <title>Compilador de propuestas</title>
+</head>
+
+<body>
+    <nav id="navbar" class="navbar-style"></nav>
+    <div class="page-title">
+        <h1>Sube una propuesta</h1>
+    </div>
+    <div class="main-display">
+        <div class="input-container">
+            <h3>Titulo</h3>
+            <input class="text-input" oninput="handleInputTitle(event)" type="text" name="" id="">
+        </div>
+        <div class="input-container">
+            <h3>Descripción</h3>
+            <textarea class="long-text-input" oninput="handleInputDescription(event)" name="" id="" cols="30"
+                rows="3"></textarea>
+        </div>
+        <div class="files-container no-show-files" id="show_files_container"></div>
+        <div class="input-container">
+            <h3>Documentos complementarios</h3>
+            <div class="upload-images-drop">
+                <div class="drop-area" draggable="true" ondragover="handleDragOver(event)"
+                    ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+                    <input class="files-input" type="file" name="" id="images" onchange="handleFileUpload(event)"
+                        hidden />
+                </div>
+            </div>
+        </div>
+        <div class="input-container">
+            <button class="upload-button" onclick="handleSendProposal(event)">Subir propuesta</button>
+        </div>
+    </div>
+</body>
+<footer class="footer">
+    <div class="footer-content">
+        <div class="footer-image">
+            <img class="footer-logo" src="/icons/leanovation.png">
+        </div>
+        <div class="leanovation-sign">
+            <h4>Desarrollado por Leanovation SA. de CV.</h4>
+        </div>
+    </div>
+</footer>
+
+</html>
+
+<script type="module" src="/js/pages/add-proposal.js"></script>
+<script type="module" src="/js/functions/apiConnection.js"></script>
+<script type="module" src="/js/components/modal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+<script type="module">
+    import { navBarComponent } from "/js/components/navbar.js";
+
+    navBarComponent("Dónovan Hernández");
+
+    const userContainer = document.querySelector(".user-identification");
+
+    userContainer.addEventListener("mouseleave", () => {
+        const modal = userContainer.querySelector(".modal-space");
+        if (modal) modal.remove();
+    });
+</script>
