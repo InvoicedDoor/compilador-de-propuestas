@@ -1,0 +1,50 @@
+.left-bar-section {
+    background-color: #2b2b2b;
+}
+
+.panel-body {
+    display: flex;
+}
+
+.left-bar-section {
+    width: 20vw;
+    display: flex;
+    padding-top: 20px;
+    flex-direction: column;
+    align-items: center;
+    gap: 25px;
+    height: 91vh;
+    border: #444 solid 1px;
+}
+
+.option-button {
+    height: 3rem;
+    width: 90%;
+    background-color: #777;
+    color: #e0e0e0;
+}
+
+.option-button:hover {
+    background-color: #555;
+    cursor: pointer;
+}
+
+.content-section {
+    width: 80vw;
+    margin: 10px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: left;
+}
+
+thead {
+    background-color: #2b2b2b;
+}

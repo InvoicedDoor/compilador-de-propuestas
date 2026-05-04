@@ -110,6 +110,34 @@
     font-size: 0.8rem;
 }
 
+.type-file-select {
+    background-color: #3A3A3A;
+    color: #fff;
+    font-weight: bold;
+    margin: 3px;
+    width: 100%;
+    height: 25px;
+}
+
+.type-file-option {
+    background-color: #4A4A4A;
+    color: #fff;
+}
+
+.delete-file-button {
+    background-color: #ca1414;
+    width: 100%;
+    height: 25px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.delete-file-image {
+    height: 15px;
+    width: 15px;
+}
+
 @media (max-width: 768px) {
 
     .input-container,

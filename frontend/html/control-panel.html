@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de administración</title>
+    <link rel="stylesheet" href="/dist/css/general-style.css">
+    <link rel="stylesheet" href="/dist/css/control-panel-style.css">
+    <link rel="stylesheet" href="/dist/css/navbar.css">
+    <link rel="icon" href="/dist/icons/favicon.svg" type="image/svg+xml">
+</head>
+
+<body>
+    <nav id="navbar" class="navbar-style"></nav>
+    <div class="panel-body">
+        <section class="left-bar-section">
+            <button class="option-button">1</button>
+            <button class="option-button">2</button>
+            <button class="option-button">3</button>
+            <button class="option-button">4</button>
+        </section>
+        <section class="content-section">
+            <div class="page-title">
+                <h1>Panel de administración</h1>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th scope="col">Nombre</th>
+                        <th scope="col">Correo</th>
+                        <th scope="col">Rol</th>
+                        <th scope="col">Estatus</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Juan Pérez</td>
+                        <td>juan.perez@example.com</td>
+                        <td>Administrador</td>
+                        <td>Activo</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    </div>
+</body>
+<script type="module" src="/dist/js/pages/control-panel-script.js"></script>
+<script type="module">
+    import { navBarComponent } from "/dist/js/components/navbar.js";
+
+    navBarComponent("Dónovan Hernández");
+
+    const userContainer = document.querySelector(".user-identification");
+
+    userContainer.addEventListener("mouseleave", () => {
+        const modal = userContainer.querySelector(".modal-space");
+        if (modal) modal.remove();
+    });
+</script>
+
+</html>

@@ -34,7 +34,7 @@ def send_proposals_route():
         data = request.form
 
         if not data.get('proposal_title'): 
-            return jsonify({"message": "El titulo no debe estar vacío."}), 409
+            return jsonify({"message": "El titulo no debe estar vacío."}), 400
 
         files = []
         errors = []

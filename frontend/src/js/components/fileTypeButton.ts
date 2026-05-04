@@ -1,0 +1,7 @@
+import { getInfo } from "../functions/apiConnection"
+
+const token: string = ""
+
+export const fileTypeButton = () => {
+    const fileTypes = getInfo("file-types", token)
+}

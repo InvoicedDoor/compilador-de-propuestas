@@ -1,14 +1,11 @@
-from src.utilities.db.db_connection import connect_to_database
 from src.utilities.logger.logger import Logger
 from src.models.proposal_model import Proposal
+from pymysql.connections import Connection
 from pymysql.cursors import DictCursor
 import traceback
 
-
 # Función para obtener todas las propuestas.
-def get_all_propsals(proposal: Proposal):
-    connection = connect_to_database()
-    connection.connect_timeout = 900
+def get_all_propsals(connection: Connection, proposal: Proposal):
     query = """
         SELECT id, title, description FROM proposal_table
         WHERE 
@@ -17,8 +14,11 @@ def get_all_propsals(proposal: Proposal):
             AND (%s IS NULL OR description = %s)
             AND (%s IS NULL OR active = %s);
         """
+    
+    cursor = None
+    
     try:
-        cursor = connection.cursor()
+        cursor = connection.cursor(DictCursor)
         cursor.execute(query, (
             proposal.id, proposal.id,
             proposal.title, proposal.title,
@@ -28,137 +28,102 @@ def get_all_propsals(proposal: Proposal):
 
         return cursor.fetchall()
 
-    except:
+    except Exception as ex:
         Logger.add_to_log('error', traceback.format_exc())
         raise ValueError("Error al obtener la contraseña.")
-    finally:
-        if cursor:
-            cursor.close()
-        if connection:
-            connection.close()
 
 
 # Función para obtener los archivos de una propuesta.
-def get_propsal_files(proposal_id: int):
-    connection = connect_to_database()
-    connection.connect_timeout = 900
+def get_propsal_files(connection: Connection, proposal_id: int):
     query = """SELECT filename, path FROM proposal_files_table 
     WHERE proposal_id = %s;"""
+    
+    cursor = None
+    
     try:
-        cursor = connection.cursor()
-        cursor.execute(query, (proposal_id))
+        cursor = connection.cursor(DictCursor)
+        cursor.execute(query, (proposal_id,))
 
         return cursor.fetchall()
-    except:
+    except Exception as ex:
         Logger.add_to_log('error', traceback.format_exc())
         raise ValueError("Error al obtener la contraseña.")
-    finally:
-        if cursor:
-            cursor.close()
-        if connection:
-            connection.close()
 
 
 # Función para obtener los datos del usuario
-def get_all_user_propsal():
-    connection = connect_to_database()
-    connection.connect_timeout = 900
+def get_all_user_propsal(connection: Connection):
     query = "SELECT * FROM ;"
+    
+    cursor = None
+    
     try:
-        cursor = connection.cursor()
+        cursor = connection.cursor(DictCursor)
 
-    except:
+    except Exception as ex:
         Logger.add_to_log('error', traceback.format_exc())
         raise ValueError("Error al obtener la contraseña.")
-    finally:
-        if cursor:
-            cursor.close()
-        if connection:
-            connection.close()
 
 # Función para obtener una propuesta según su ID.
-def get_propsal_by_id():
-    connection = connect_to_database()
-    connection.connect_timeout = 900
+def get_propsal_by_id(connection: Connection, ):
+    
+    cursor = None
+    
     try:
-        cursor = connection.cursor()
+        cursor = connection.cursor(DictCursor)
 
-    except:
+    except Exception as ex:
         Logger.add_to_log('error', traceback.format_exc())
         raise ValueError("Error al obtener la contraseña.")
-    finally:
-        if cursor:
-            cursor.close()
-        if connection:
-            connection.close()
-
 
 # Función para agregar una propuesta.
-def send_propsal(title: str, description: str):
-    connection = connect_to_database()
-    connection.connect_timeout = 900
+def send_propsal(connection: Connection, title: str, description: str):
     query = "INSERT INTO proposal_table (title, description) VALUES (%s, %s);"
+    
+    cursor = None
+    
     try:
-        cursor = connection.cursor()
+        cursor = connection.cursor(DictCursor)
         cursor.execute(query, (title, description))
 
-        if connection.affected_rows() == 0:
+        if cursor.rowcount == 0:
             return None
         
-        connection.commit()
-
-        # Retorna el id del nuevo registro.
         return cursor.lastrowid
-    except:
+    except Exception as ex:
         Logger.add_to_log('error', traceback.format_exc())
-        raise ValueError("Error al obtener la contraseña.")
-    finally:
-        if cursor:
-            cursor.close()
-        if connection:
-            connection.close()
+        raise ValueError("Error al obtener propuestas.")
 
 
 # Función para agregar un documento a una propuesta.
-def add_proposal_files(proposal_id: int, filename: str, path: str):
-    connection = connect_to_database()
-    connection.connect_timeout = 900
+def add_proposal_files(connection: Connection, proposal_id: int, filename: str, path: str):
     query = "INSERT INTO proposal_files_table (proposal_id, filename, path) VALUES (%s, %s, %s);"
+    
+    cursor = None
+    
     try:
-        cursor = connection.cursor()
+        cursor = connection.cursor(DictCursor)
         cursor.execute(query, (proposal_id, filename, path))
-        connection.commit()
 
         return cursor.rowcount > 0
-    except:
+    except Exception as ex:
         Logger.add_to_log('error', traceback.format_exc())
         raise ValueError("Error al cargar el archivo.")
-    finally:
-        if cursor:
-            cursor.close()
-        if connection:
-            connection.close()
 
 
-def add_relation_user_proposal(user_id: int, proposal_id: int):
-    connection = connect_to_database()
-    connection.connect_timeout = 900
+def add_relation_user_proposal(connection: Connection, user_id: int, proposal_id: int):
     query = """INSERT INTO proposal_users_table (user_id, proposal_id) 
     VALUES (%s, %s);"""
+    
+    cursor = None
+    
     try:
-        cursor = connection.cursor()
+        cursor = connection.cursor(DictCursor)
         cursor.execute(query, (user_id, proposal_id))
 
         if connection.affected_rows() == 0:
             return False
         
-        connection.commit()
         return True
     except Exception as ex:
         raise ValueError(f"Error: {ex}")
-    finally:
-        if connection:
-            connection.close()
-        if cursor:
-            cursor.close()
 
