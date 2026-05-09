@@ -1,5 +1,5 @@
 export const getInfo = async (endpoint: string, token: string) => {
-    const res = await fetch(`http://localhost/api/${endpoint}`, {
+    const res = await fetch(`/api/${endpoint}`, {
         headers: {
             Authorization: `Bearer ${token}`
         }
@@ -9,7 +9,7 @@ export const getInfo = async (endpoint: string, token: string) => {
 }
 
 export const uploadInfo = async (endpoint: string, token: string, data: any) => {
-    const res = await fetch(`http://localhost/api/${endpoint}`, {
+    const res = await fetch(`/api/${endpoint}`, {
         headers: {
             Authorization: `Bearer ${token}`
         },
@@ -21,7 +21,7 @@ export const uploadInfo = async (endpoint: string, token: string, data: any) => 
 }
 
 export const modifyInfo = async (endpoint: string, token: string, data: any, elementId: Number) => {
-    const res = await fetch(`http://localhost/api/${endpoint}/${elementId}`, {
+    const res = await fetch(`/api/${endpoint}/${elementId}`, {
         headers: {
             "Authorization": `Bearer ${token}`,
         },
@@ -33,7 +33,7 @@ export const modifyInfo = async (endpoint: string, token: string, data: any, ele
 }
 
 export const auth = async (data: any) => {
-    const res = await fetch(`http://localhost/api/auth`, {
+    const res = await fetch(`/api/auth`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
