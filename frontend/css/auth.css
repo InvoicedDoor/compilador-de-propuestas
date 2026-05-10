@@ -5,26 +5,48 @@ body {
     color: #e0e0e0;
 }
 
-.login-container {
-    height: 100vh;
+.link-container {
+    width: 100%;
+    display: flex;
+    justify-content: right;
+    align-items: center;
+    height: 2rem;
+    margin-top: 1rem;
+}
+
+.link-container a {
+    font-size: 12px;
+    color: white;
+}
+
+.link-container p {
+    font-size: 12px;
+    color: white;
+}
+
+.auth-container {
+    min-height: 100vh;
+    height: auto;
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
-.login-card {
+.auth-card {
+    margin: 1rem;
     background-color: #2b2b2b;
     padding: 2rem;
     border-radius: 8px;
     width: 320px;
+    min-height: 400px;
+    min-height: 500px;
 }
 
-.login-header {
+.auth-header {
     text-align: center;
-    margin-bottom: 1.5rem;
 }
 
-.login-logo {
+.auth-logo {
     width: 60px;
     margin-bottom: 10px;
 }
@@ -53,7 +75,7 @@ input:focus {
     border-color: #4caf50;
 }
 
-.login-button {
+.auth-button {
     width: 100%;
     background-color: #4caf50;
     border: none;
@@ -63,11 +85,11 @@ input:focus {
     cursor: pointer;
 }
 
-.login-button:hover {
+.auth-button:hover {
     background-color: #43a047;
 }
 
-.login-footer {
+.auth-footer {
     margin-top: 1rem;
     text-align: center;
     font-size: 0.8rem;

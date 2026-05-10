@@ -13,11 +13,11 @@
 </head>
 
 <body>
-    <div class="login-container">
-        <div class="login-card">
+    <div class="auth-container">
+        <div class="auth-card">
 
-            <div class="login-header">
-                <img src="/icons/proposal-manager.png" class="login-logo">
+            <div class="auth-header">
+                <img src="/icons/proposal-manager.png" class="auth-logo">
                 <h2>Iniciar sesión</h2>
                 <p class="subtitle">Accede a tu cuenta</p>
             </div>
@@ -26,21 +26,25 @@
 
                 <div class="input-group">
                     <label>Usuario</label>
-                    <input type="text" id="username" onchange="handleInputMail(event)" required>
+                    <input type="text" id="username" onchange="handleInput(event)" required>
                 </div>
 
                 <div class="input-group">
                     <label>Contraseña</label>
-                    <input type="password" id="password" onchange="handleInputPassword(event)" required>
+                    <input type="password" id="password" onchange="handleInput(event)" required>
                 </div>
 
-                <button type="submit" class="login-button" onclick="handleLogin(event)">
+                <button type="submit" class="auth-button" onclick="handleLogin(event)">
                     Iniciar sesión
                 </button>
 
             </form>
 
-            <div class="login-footer">
+            <div class="link-container">
+                <p>¿No tienes cuenta? <a href="/html/register.html">Regístrate</a></p>
+            </div>
+
+            <div class="auth-footer">
                 <p>© Leanovation SA. de CV.</p>
             </div>
 
@@ -48,6 +52,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
-    <script type="module" src="/dist/js/pages/login.js"></script>
+    <script src="/dist/js/pages/login.js"></script>
 </body>
 </html>

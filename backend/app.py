@@ -11,8 +11,17 @@ log_file = os.getenv("DEFAULT_LOGGER_FILENAME")
 
 try:
     configuration = config['development']
-    if not Path.exists(f"{log_directory}/{log_file}"):
-        Path.mkdir(f"{log_directory}/{log_file}")
+    
+    log_path_directory = Path(log_directory)
+
+    if not log_path_directory.exists():
+        log_path_directory.mkdir(parents=True, exist_ok=True)
+
+    log_path_file = log_path_directory / log_file
+
+    if not log_path_file.exists():
+        log_path_file.touch()
+
     app = init_app(configuration)
     if __name__ == '__main__':
         app.run(debug=False,
@@ -20,4 +29,5 @@ try:
                 port=5000)
         
 except Exception as ex:
+    print(ex)
     print("Error al iniciar el servidor.")

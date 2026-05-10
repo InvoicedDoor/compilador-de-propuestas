@@ -8,40 +8,69 @@
     <link rel="icon" href="/icons/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="/css/auth.css">
     <link rel="stylesheet" href="/css/modal.css">
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
 </head>
 <body>
-    <div class="login-container">
-        <div class="login-card">
+    <div class="auth-container">
+        <div class="auth-card">
 
-            <div class="login-header">
-                <img src="/icons/proposal-manager.png" class="login-logo">
-                <h2>Iniciar sesión</h2>
-                <p class="subtitle">Accede a tu cuenta</p>
+            <div class="auth-header">
+                <img src="/icons/proposal-manager.png" class="auth-logo">
+                <h2>Registro</h2>
+                <p class="subtitle">Crea una cuenta</p>
             </div>
 
-            <form id="loginForm">
+            <form id="registerForm">
 
                 <div class="input-group">
-                    <label>Usuario</label>
-                    <input type="text" id="username" onchange="handleInputMail(event)" required>
+                    <label>Nombres</label>
+                    <input type="text" id="name" onchange="handleInput(event)" required>
+                </div>
+
+                <div class="input-group">
+                    <label>Primer apellido</label>
+                    <input type="text" id="lastname" onchange="handleInput(event)" required>
+                </div>
+
+                <div class="input-group">
+                    <label>Segundo apellido</label>
+                    <input type="text" id="lastname" onchange="handleInput(event)" required>
+                </div>
+
+                <div class="input-group">
+                    <label>Correo</label>
+                    <input type="text" id="mail" onchange="handleInput(event)" required>
                 </div>
 
                 <div class="input-group">
                     <label>Contraseña</label>
-                    <input type="password" id="password" onchange="handleInputPassword(event)" required>
+                    <input type="password" id="password" onchange="handleInput(event)" required>
                 </div>
 
-                <button type="submit" class="login-button" onclick="handleLogin(event)">
-                    Iniciar sesión
+                <div class="input-group">
+                    <label>Confirmar contraseña</label>
+                    <input type="confirm-password" id="password" onchange="handleInput(event)" required>
+                </div>
+
+                <button type="submit" class="auth-button" onclick="handleRegister(event)">
+                    Registrar
                 </button>
 
             </form>
 
-            <div class="login-footer">
+            <div class="link-container">
+                <p>¿Tienes cuenta? <a href="/html/login.html">Iniciar sesión</a></p>
+            </div>
+
+            <div class="auth-footer">
                 <p>© Leanovation SA. de CV.</p>
             </div>
 
         </div>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <script type="module" src="/dist/js/pages/register.js"></script>
 </body>
 </html>

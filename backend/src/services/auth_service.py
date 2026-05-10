@@ -76,13 +76,13 @@ def change_password_service(mail: str, old_password: str = None, new_password: s
                 "message": "El correo no está registrado."
             }), 401
         
-        is_valid = validate_password(old_password, credentials.password)
+        # is_valid = validate_password(old_password, credentials.password)
 
-        if not is_valid:
+        """if not is_valid:
             return jsonify({
                 "data": {},
                 "message": "No capturaste la contraseña correcta. No puedes cambiar la contraseña sin las credenciales correctas."
-            }), 409
+            }), 409"""
         
         hashed_password = password_encryption(new_password)
         is_changed = change_password(mail, hashed_password)
