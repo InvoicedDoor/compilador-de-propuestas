@@ -1,4 +1,4 @@
-from src.utilities.handlers.http_exceptions import ProposalUploadFileError
+from src.utilities.handlers.http_exceptions import BadRequest
 import magic, os, uuid
 
 ALLOWED_EXTENSIONS = {
@@ -16,7 +16,7 @@ def verify_extension(file, complementary_message = None):
     ext = file.filename.split(".")[-1].lower()
 
     if ext not in ALLOWED_EXTENSIONS:
-        raise ProposalUploadFileError(f"Tipo de archivo no permitido. {complementary_message}")
+        raise BadRequest(f"Tipo de archivo no permitido. {complementary_message}")
     
     return ext
 
@@ -27,7 +27,7 @@ def verify_mime(file):
     file.seek(0)
 
     if mime in BLOCKED_TYPES:
-        raise ProposalUploadFileError("Tipo MIME bloqueado.")
+        raise BadRequest("Tipo MIME bloqueado.")
 
     return mime
 

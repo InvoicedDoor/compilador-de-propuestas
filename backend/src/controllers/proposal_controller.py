@@ -3,8 +3,10 @@ from ..dtos.proposal_dto import ProposalDto
 from ..models.proposal_model import ProposalFilter
 from src.utilities.logger.logger import Logger
 from src.utilities.middlewares.veryfy_authentication import verify_authentication
+from src.utilities.handlers.http_exceptions import *
+from src.utilities.handlers.http_success import *
 from jwt import decode
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request
 from config import Config
 import traceback
 
@@ -20,21 +22,23 @@ def get_all_proposals_route():
         proposal: ProposalFilter = ProposalFilter()
         data = get_proposals_from_admin_service(proposal)
 
-        return jsonify({
-            "data": data,
-            "message": "Datos encontrados."
-        })
+        return OK("Datos encontrados.", data).to_response()
+    
+    except DomainError as domErr:
+        return domErr.to_dict()
+
     except Exception as ex:
         Logger.add_to_log('error', traceback.format_exc())
-        return 'Error', 500
+        raise InternalServerError('Error')
 
 @main.post('/')
 @verify_authentication
 def send_proposals_route():
+    try:
         data = request.form
 
         if not data.get('proposal_title'): 
-            return jsonify({"message": "El titulo no debe estar vacío."}), 400
+            raise BadRequest("El titulo no debe estar vacío.")
 
         files = []
         errors = []
@@ -48,19 +52,26 @@ def send_proposals_route():
             file.seek(0)
 
             if size > MAX_SIZE:
-                return jsonify({ "message": f"{file.filename} demasiado grande." })
+                raise BadRequest(f"{file.filename} demasiado grande.")
 
             files.append(file)
 
         if errors:
-            return jsonify({ "message": errors }), 400
+            raise BadRequest(errors)
 
         token = request.headers.get("Authorization")
         payload = decode(token.split(" ")[1], key, algorithms=['HS256'])
         proposal = ProposalDto(proposal_title=data["proposal_title"],
-                               proposal_description=data["proposal_description"],
-                               proposal_manager=payload["id"])
+        proposal_description=data["proposal_description"],
+        proposal_manager=payload["id"])
 
         service_message =  add_proposal_service(payload["id"], proposal, files)
 
-        return jsonify({"message": service_message}), 201
+        return Created(service_message).to_response()
+    
+    except DomainError as domErr:
+        return domErr.to_dict()
+
+    except Exception:
+        Logger.add_to_log('error', traceback.format_exc())
+        raise InternalServerError('Error')

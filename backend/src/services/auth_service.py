@@ -1,7 +1,23 @@
-from ..repos.auth_repo import get_auth, change_password, get_user_by_mail
-from ..repos.user_repo import get_user_by_id
-from src.utilities.hashing.hashing_password import validate_password, password_encryption
-from src.utilities.db.db_connection import connect_to_database
+from ..repos.auth_repo import (
+    get_auth, 
+    change_password, 
+    get_user_by_mail, 
+    register_user_repo)
+from ..repos.user_repo import (
+    get_users,
+    get_user_by_id, 
+    add_user_repo)
+from src.utilities.hashing.hashing_password import (
+    validate_password, 
+    password_encryption)
+from src.models.user_model import (
+    RegisterUser, 
+    User)
+from src.models.auth_model import (
+    RegisterCredentials, 
+    Auth)
+from src.utilities.handlers.http_exceptions import *
+from src.utilities.db.db_connection import SessionLocal
 from src.utilities.logger.logger import Logger
 from config import Config
 from flask import jsonify
@@ -14,31 +30,22 @@ from datetime import (
 key = Config.SECRET_KEY
 
 def auth_service(mail: str, password: str):
-
+    session = SessionLocal()
     try:
-        credentials = get_auth(mail)
+        credentials = get_auth(session, mail)
 
         if not credentials:
-            return jsonify({
-                "message": "El usuario no existe.",
-                "data": {}
-            }), 403
+            raise NotFound("El usuario no existe.")
 
         valid_password = validate_password(password, credentials.password)
 
         if not valid_password:
-            return jsonify({
-                "message": "La contraseña es incorrecta.",
-                "data": {}
-            }), 403
+            raise BadRequest("La contraseña es incorrecta.")
         
-        user = get_user_by_id(credentials.user_id)
+        user = credentials.user
 
         if not user:
-            return jsonify({
-                "message": "El usuario no tiene registro.",
-                "data": {}
-            }), 409
+            raise NotFound("El usuario no tiene registro.")
 
         payload = {
             'id': user.id,
@@ -48,88 +55,106 @@ def auth_service(mail: str, password: str):
             'exp': datetime.utcnow() + timedelta(minutes=120)
         }
 
-        return jsonify({
-            "data": encode(payload, key, algorithm='HS256'),
-            "message": "Inicio de sesión correcto.",
-        })
-                
+        return encode(payload, key, algorithm='HS256')
+
+    except DomainError as domErr:
+        raise domErr
+
     except Exception as ex:
         Logger.add_to_log('error', format_exc())
-        return jsonify({
-            "message": "Error",
-            "data": {}
-        }), 500
+        raise InternalServerError("Error.")
+    finally:
+        session.close()
+
 
 def change_password_service(mail: str, old_password: str = None, new_password: str = None, new_password_confirmation: str = None):
     
     if new_password != new_password_confirmation:
-        return jsonify({
-                "data": {},
-                "message": "La contraseña no coincide con la confirmación."
-            }), 409
+        raise BadRequest("La contraseña no coincide con la confirmación.")
+    
+    session = SessionLocal()
 
     try:
-        credentials = get_user_by_mail(mail)
+        credentials = get_user_by_mail(session, mail)
         if not credentials:
-            return jsonify({
-                "data": {},
-                "message": "El correo no está registrado."
-            }), 401
+            return NotFound("El correo no está registrado.")
         
-        # is_valid = validate_password(old_password, credentials.password)
+        is_valid = validate_password(old_password, credentials.password)
 
-        """if not is_valid:
-            return jsonify({
-                "data": {},
-                "message": "No capturaste la contraseña correcta. No puedes cambiar la contraseña sin las credenciales correctas."
-            }), 409"""
+        if not is_valid:
+            return BadRequest("No capturaste la contraseña correcta. No puedes cambiar la contraseña sin las credenciales correctas.")
         
         hashed_password = password_encryption(new_password)
-        is_changed = change_password(mail, hashed_password)
+        is_changed = change_password(session, mail, hashed_password)
         if not is_changed:
-            return jsonify({
-                "data": {},
-                "message": "No se pudo cambiar la contraseña."
-            }), 409
+            return InternalServerError("No se pudo cambiar la contraseña.")
         
-        return jsonify({
-            "message": "Contraseña modificada con éxito.",
-            "data": {}
-        }), 201
+        return "Contraseña modificada con éxito."
+
+    except DomainError as domErr:
+        raise domErr
+
     except:
         Logger.add_to_log('error', format_exc())
-        return jsonify({
-            "data": {},
-            "message": "Error en el servidor."
-        }), 500
-
-def register_user(name, mail, password, rol):
-    connection = connect_to_database()
-    connection.connect_timeout = 900
-    query = 'SELECT * FROM system_users WHERE mail = %s'
-    insertion = 'INSERT INTO system_users (name, mail, password, salt, rol) \
-    VALUES (%s, %s, %s, %s, %s)'
-    try:
-        cursor = connection.cursor()
-        cursor.execute(query, mail)
-        user = cursor.fetchone()
-        
-        if user:
-            return jsonify("El usuario está registrado."), 409
-        
-        newPassword, salt = password_encryption(password)
-        
-        cursor.execute(insertion, [name, mail, newPassword, salt, rol])
-        connection.commit()
-        
-        if cursor.rowcount == 1:
-            return jsonify("Registro realizado.")
-        
-        return jsonify('No se pudo realizar el registro.'), 500
-    except Exception as ex:
-        Logger.add_to_log('error', format_exc())
-        return "Error", 500
+        raise InternalServerError("Error en el servidor.")
     finally:
-        if cursor:
-            cursor.close()
-        connection.close()
+        session.close()
+
+
+def register_user(user: RegisterUser, credentials: RegisterCredentials):
+    session = SessionLocal()
+
+    try:
+        exist_user = get_user_by_mail(session, credentials.mail)
+
+        if exist_user:
+            raise Conflict("El usuario ya existe en la base de datos.")
+        
+        new_user = User(**user.model_dump())
+
+        saved_user = add_user_repo(session, new_user)
+
+        if not saved_user.id:
+            session.rollback()
+
+            raise InternalServerError("El usuario no se pudo registrar.")
+
+        new_password  = password_encryption(
+            credentials.password
+        )
+
+        new_user_credentials = Auth(
+            user_id=saved_user.id,
+            mail=credentials.mail,
+            password=new_password
+        )
+
+        resp_credentials = register_user_repo(
+            session,
+            new_user_credentials
+        )
+
+        if not resp_credentials:
+            session.rollback()
+
+            raise BadRequest('No se pudo realizar el registro.')
+
+        session.commit()
+
+        return "Registro realizado."
+    
+    except DomainError as domErr:
+        raise domErr
+
+    except Exception:
+        session.rollback()
+
+        Logger.add_to_log(
+            'error',
+            format_exc()
+        )
+
+        raise InternalServerError("Error")
+
+    finally:
+        session.close()

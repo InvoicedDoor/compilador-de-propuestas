@@ -1,30 +1,50 @@
-from src.utilities.db.db_connection import connect_to_database
-from src.models.user_model import RowUser
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+from src.utilities.db.db_connection import SessionLocal
+from src.models.user_model import RowUser, User
+from src.models.auth_model import Auth
 from src.utilities.logger.logger import Logger
-from pymysql.cursors import DictCursor
 import traceback
 
 def get_users():
+    session = SessionLocal()
     try:
-        pass
+        query = select(User)
+
+        result = session.execute(query)
+
+        users = result.scalars()
+
+        return users.all()
     except Exception as ex:
         Logger.add_to_log('error', traceback.format_exc())
         raise ValueError(f"Error: {ex}")
 
 def get_user_by_id(user_id: int):
-    connection = connect_to_database()
-    connection.connect_timeout = 900
-    query = "SELECT * FROM users_table WHERE id = %s;"
+    session = SessionLocal()
     try:
-        cursor = connection.cursor(DictCursor)
-        cursor.execute(query, (user_id,))
+        query = select(User).where(
+            User.id == user_id
+        )
         
-        if cursor.rowcount == 0:
-            return None
-        
-        user = cursor.fetchone()
+        result = session.execute(query)
 
-        return RowUser(**user)
+        return result.scalar_one_or_none()
+
     except Exception as ex:
         Logger.add_to_log('error', traceback.format_exc())
         raise ValueError(f"Error: {ex}")
+    
+
+def add_user_repo(session: Session, user: User):
+    try:
+        session.add(user)
+
+        session.flush()
+
+        return user
+
+    except Exception as ex:
+        session.rollback()
+        Logger.add_to_log('error', traceback.format_exc())
+        raise ValueError("Error al agregar al usuario.")

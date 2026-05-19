@@ -11,14 +11,17 @@ CORS(app)
 
 @app.errorhandler(DomainError)
 def handle_domain_error(error):
-    return jsonify({"message": error.message}), error.status_code
+    
+    return jsonify(
+        error.to_dict()
+    ), error.status_code
 
 def init_app(config):
     try:
         app.config.from_object(config)
         app.register_blueprint(auth_controller.main, url_prefix='/api/auth')
         app.register_blueprint(proposal_controller.main, url_prefix='/api/proposal')
-        app.register_blueprint(file_types_controller.main, url_prefix='/api/file-types')
+        app.register_blueprint(file_types_controller.main, url_prefix='/api/file-tipes')
 
         return app
     except Exception as ex:

@@ -1,18 +1,30 @@
 from dotenv import load_dotenv
-import os, pymysql
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+import os
 
 load_dotenv()
 
-def connect_to_database():
-    try:
-        connection = pymysql.connect(
-            host=os.getenv('HOST'),
-            user=os.getenv('USER'),
-            password=os.getenv('PASSWORD'),
-            database=os.getenv('DATABASE'))
-        if connection:
-            return connection
-        
-        return pymysql.err.DatabaseError
-    except Exception as ex:
-        raise ValueError("No se pudo establecer conexión con la base de datos")
+DATABASE_URL = (
+    f"mysql+pymysql://"
+    f"{os.getenv('USER')}:"
+    f"{os.getenv('PASSWORD')}@"
+    f"{os.getenv('HOST')}/"
+    f"{os.getenv('DATABASE')}"
+)
+
+engine = create_engine(
+    DATABASE_URL,
+
+    pool_pre_ping=True,
+
+    pool_recycle=3600,
+
+    echo=True
+)
+
+SessionLocal = sessionmaker(
+    bind=engine,
+    autoflush=False,
+    autocommit=False
+)

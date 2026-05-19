@@ -1,119 +1,126 @@
-from src.utilities.db.db_connection import connect_to_database
-from src.utilities.hashing.hashing_password import password_encryption, validate_password
+from src.utilities.db.db_connection import SessionLocal
+from sqlalchemy import select
+from sqlalchemy.orm import joinedload, Session
 from src.models.user_model import User, RegisterUser
-from src.models.auth_model import Auth, RegisterCredentials, GetAuth
+from src.models.auth_model import Auth, RegisterCredentials
 from src.utilities.logger.logger import Logger
-from pymysql.cursors import DictCursor
 import traceback
 
-def get_hashed_password(mail: str):
-    connection = connect_to_database()
-    connection.connect_timeout = 900
+def get_hashed_password(session: Session, mail: str):
     try:
-        cursor = connection.cursor()
-        query = "SELECT password FROM users_table WHERE mail = %s;"
+        query = (select(Auth)
+        .options(
+            joinedload(Auth.user)
+        )
+        .where(
+            Auth.mail == mail
+        ))
 
-        cursor.execute(query, (mail,))
+        result = session.execute(query)
 
-        return cursor.fetchone()
+        credentials = result.scalar_one_or_none()
+
+        return credentials
     except:
-        Logger.add_to_log('error', traceback.format_exc())
-        raise ValueError("Error al obtener la contraseña.")
-    finally:
-        if cursor:
-            cursor.close()
-        if connection:
-            connection.close()
+        Logger.add_to_log("error", traceback.format_exc())
 
-def get_auth(mail: str):
-    connection = connect_to_database()
-    connection.connect_timeout = 900
+        raise ValueError(
+            "Error al obtener la autenticación."
+        )
 
+
+def get_auth(session: Session,mail: str):
     try:
-        cursor = connection.cursor(DictCursor)
-        cursor.callproc("get_auth", (mail,))
-        row = cursor.fetchone()
-        cursor.nextset()
+        query = select(Auth).where(
+            Auth.mail == mail
+        )
 
-        if not row:
-            return None
+        result = session.execute(query)
 
-        return GetAuth(**row)
+        return result.unique().scalar_one_or_none()
     except:
         Logger.add_to_log('error', traceback.format_exc())
         raise ValueError("Error al autenticarse.")
-    finally:
-        if cursor:
-            cursor.close()
-        if connection:
-            connection.close()
-
-def change_password(mail, new_password):
-    connection = connect_to_database()
-    connection.connect_timeout = 900
-    query = "UPDATE credentials_table SET password = %s WHERE mail = %s"
-    try:
-        cursor = connection.cursor()
-        cursor.execute(query, (new_password, mail))
-
-        if connection.affected_rows() == 0:
-            return False
-        
-        connection.commit()
-        return True
-    except Exception as ex:
-        Logger.add_to_log('error', traceback.format_exc())
-        raise ValueError(f"Error: {ex}")
-    finally:
-        if cursor:
-            cursor.close()
-        if connection:
-            connection.close()
     
-def get_user_by_mail(mail: str):
-    connection = connect_to_database()
-    connection.connect_timeout = 900
-    query = "SELECT * FROM credentials_table WHERE mail = %s;"
-    try:
-        cursor = connection.cursor(DictCursor)
-        cursor.execute(query, (mail,))
 
-        if cursor.rowcount == 0:
+def change_password(session: Session, mail: str, new_password: str):
+    try:
+
+        user = session.query(Auth)\
+            .filter(
+                Auth.mail == mail
+            ).first()
+
+        if not user:
+            return False
+
+        user.password = new_password
+
+        session.commit()
+
+        return True
+
+    except Exception as ex:
+
+        session.rollback()
+
+        Logger.add_to_log(
+            'error',
+            traceback.format_exc()
+        )
+
+        raise ValueError(f"Error: {ex}")
+
+    finally:
+
+        session.close()
+    
+def get_user_by_mail(session: Session, mail: str):
+    try:
+
+        query = select(Auth).where(
+            Auth.mail == mail
+        )
+
+        result = session.execute(query)
+
+        credentials = result.unique().scalar_one_or_none()
+
+        if not credentials:
             return None
-        
-        credentials = cursor.fetchone()
-        return GetAuth(**credentials)
+
+        return credentials
+
     except Exception as ex:
-        Logger.add_to_log('error', traceback.format_exc())
+
+        Logger.add_to_log(
+            'error',
+            traceback.format_exc()
+        )
+
         raise ValueError(f"Error: {ex}")
-    finally:
-        if cursor:
-            cursor.close()
-        if connection:
-            connection.close()
     
-def register_user(user: RegisterUser, credentials: RegisterCredentials):
-    connection = connect_to_database()
-    connection.connect_timeout = 900
+def register_user_repo(
+    session: Session,
+    credentials: Auth
+):
+
     try:
-        cursor = connection.cursor()
-        new_user: User = cursor.callproc("register_user", (user.name, user.rol_id))
+        session.add(credentials)
 
-        if not new_user:
-            return False
+        session.flush()
 
-        new_credentials: Auth = cursor.callproc("register_credentials", (credentials.user_id))
-
-        if not new_credentials:
-            return False
-        
-        connection.commit()
         return True
-    except:
-        Logger.add_to_log('error', traceback.format_exc())
-        raise ValueError("Error al agregar al usuario.")
-    finally:
-        if cursor:
-            cursor.close()
-        if connection:
-            connection.close()
+
+    except Exception:
+
+        session.rollback()
+
+        Logger.add_to_log(
+            'error',
+            traceback.format_exc()
+        )
+
+        raise ValueError(
+            "Error al agregar usuario."
+        )

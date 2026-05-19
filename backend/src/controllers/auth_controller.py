@@ -1,8 +1,12 @@
-from ..services.auth_service import auth_service, change_password_service
+from ..services.auth_service import auth_service, change_password_service, register_user
 from src.utilities.middlewares.veryfy_authentication import verify_authentication
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request
 from src.utilities.logger.logger import Logger
+from src.models.auth_model import RegisterCredentials
+from src.models.user_model import RegisterUser
 from config import routes
+from src.utilities.handlers.http_exceptions import *
+from src.utilities.handlers.http_success import *
 import traceback
 
 main = Blueprint('auth_blueprint', __name__)
@@ -11,7 +15,7 @@ main = Blueprint('auth_blueprint', __name__)
 @main.get('')
 @verify_authentication
 def verify_auth():
-    return jsonify({ "message": "Authorized" })
+    return OK("Authorized").to_response()
 
 
 @main.post('')
@@ -19,13 +23,19 @@ def auth_route():
     try:
         mail = request.json['mail']
         password = request.json['password']
-        return auth_service(mail, password)
+        res_service = auth_service(mail, password)
+
+        return OK(data=res_service).to_response()
+    
+    except DomainError as domErr:
+        return domErr.to_dict()
+    
     except Exception as ex:
         Logger.add_to_log('error', traceback.format_exc())
-        return {"message": 'Error'}, 500
+        raise InternalServerError('Error')
 
 
-@main.post("/change-password/")
+@main.post("/change-password")
 def change_password_route():
     try:
         mail = request.json["mail"]
@@ -33,7 +43,37 @@ def change_password_route():
         new_password = request.json['new_password']
         new_password_confirmation = request.json['new_password_confirmation']
 
-        return change_password_service(mail, old_password, new_password, new_password_confirmation)
+        res_service = change_password_service(mail, old_password, new_password, new_password_confirmation)
+
+        return OK(res_service).to_response()
+    
+    except DomainError as domErr:
+        return domErr.to_dict()
+
     except Exception as ex:
         Logger.add_to_log('error', traceback.format_exc())
-        return {"message": 'Error'}, 500
+        raise InternalServerError('Error')
+    
+
+@main.post("/register")
+def register_route():
+    try:
+        data = request.get_json()
+
+        credentials = RegisterCredentials(**data)
+
+        user = RegisterUser(**data)
+
+        res_service = register_user(
+            user,
+            credentials
+        )
+
+        return Created(res_service).to_response()
+    
+    except DomainError as domErr:
+        return domErr.to_dict()
+
+    except Exception as ex:
+        Logger.add_to_log('error', traceback.format_exc())
+        raise InternalServerError('Error')

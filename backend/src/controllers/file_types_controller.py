@@ -1,22 +1,25 @@
 
 from src.utilities.middlewares.veryfy_authentication import verify_authentication
-from ..services.filte_type_service import get_file_types_service
-from flask import Blueprint, jsonify
+from src.utilities.handlers.http_exceptions import *
+from src.utilities.handlers.http_success import *
+from ..services.filte_type_service import get_file_tipes_service
+from flask import Blueprint, request
 from src.utilities.logger.logger import Logger
 import traceback
 
-main = Blueprint('file_types_blueprint', __name__)
+main = Blueprint('file_tipes_blueprint', __name__)
 
 @main.get('')
 @verify_authentication
-def get_all_proposals_route():
+def get_all_file_tipes_route():
     try:
-        file_types = get_file_types_service()
+        file_types = get_file_tipes_service()
 
-        return jsonify({
-            "data": file_types,
-            "message": "Datos encontrados."
-        })
+        return OK("Datos encontrados.", file_types).to_response()
+    
+    except DomainError as domErr:
+        return domErr.to_dict()
+
     except Exception as ex:
         Logger.add_to_log('error', traceback.format_exc())
-        return 'Error', 500
+        raise InternalServerError('Error')
