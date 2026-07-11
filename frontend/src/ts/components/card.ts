@@ -16,9 +16,10 @@
     </div>
 </div>*/
 
-export const cardComponent = (titleContent: string, descriptionContent: string, imageSrc: string) => {
+export const cardComponent = (titleContent: string, descriptionContent: string, imageSrc: string, onclick: () => void) => {
     const cardContainer = document.createElement("div");
     cardContainer.className = "card";
+    cardContainer.onclick = onclick;
 
     const cardImageContainer = document.createElement("div");
     cardImageContainer.className = "image-container";

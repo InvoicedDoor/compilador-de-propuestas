@@ -17,7 +17,7 @@ class User(Base):
 
     second_lastname: Mapped[str] = mapped_column(String(40))
     
-    rol_id: Mapped[int] = mapped_column(ForeignKey("roles_table.id"))
+    rol_id: Mapped[int] = mapped_column(ForeignKey("roles_table.id"), default=2)
 
     rol: Mapped["Rol"] = relationship(
         "Rol",
@@ -39,12 +39,12 @@ class User(Base):
     )
 
 class RowUser(BaseModel):
-    id: int = Field(...)
-    name: str = Field(...)
-    rol_id: int = Field(...)
+    id: int = Field(None)
+    mail: str = Field(None)
+    rol: int = Field(None)
 
 class RegisterUser(BaseModel):
     name: str = Field(...)
     first_lastname: str = Field(...)
     second_lastname: Optional[str] = Field(None)
-    rol_id: int = Field(...)
+    rol_id: Optional[int] = Field(None)

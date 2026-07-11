@@ -10,9 +10,9 @@ if (!token) {
     window.location.href = "/html/login.html";
 }
 
-(async () => { 
+(async () => {
     await verifyAuth(token);
-}) ();
+})();
 /* ===================== DOM ===================== */
 
 const cardsContainer = document.getElementById("cards-container");
@@ -24,6 +24,7 @@ if (!cardsContainer) {
 /* ===================== TYPES ===================== */
 
 interface CardData {
+    id: number
     title: string;
     description: string;
     source: {
@@ -33,6 +34,11 @@ interface CardData {
 
 interface ApiResponse<T> {
     data: T;
+    message: string
+}
+
+function getProposalInfo(cardId: number) {
+    window.location.href = "/project/" + cardId;
 }
 
 /* ===================== DATA ===================== */
@@ -40,21 +46,30 @@ interface ApiResponse<T> {
     const response: Response = await getInfo("proposal", token);
     const dataJson: ApiResponse<CardData[]> = await response.json();
 
-    if (response.ok) {
-        const cards = dataJson.data ?? [];
+    // Limpia el contenedor
+    cardsContainer.replaceChildren();
 
-        if (!cardsContainer.hasChildNodes() && cards.length > 0) {
+    if (!response.ok && dataJson.message !== "") {
+        {
+            const h3 = document.createElement("h3");
 
-            cards.forEach((card: CardData) => {
-                const cardElement = cardComponent(
-                    card.title,
-                    card.description,
-                    card.source.source
-                );
-
-                cardsContainer.appendChild(cardElement);
-            });
-
+            h3.textContent = dataJson.message;
+            cardsContainer.appendChild(h3);
+            return;
         }
     }
-}) ();
+
+    const cards = dataJson.data ?? [];
+
+    cards.forEach((card: CardData) => {
+        const cardElement = cardComponent(
+            card.title,
+            card.description,
+            card.source.source,
+            () => getProposalInfo(card.id)
+        );
+
+        cardsContainer.appendChild(cardElement);
+    });
+
+})();

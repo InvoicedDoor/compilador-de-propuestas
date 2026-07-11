@@ -1,6 +1,6 @@
 from src.utilities.logger.logger import Logger
-from src.models.file_type_model import FileTypeModel, MimeTypeModel
-from sqlalchemy.orm import joinedload, Session
+from src.models.file_type_model import FileTypeModel, MimeTypeModel, MimeTypeExtensionTable, MimeCategoryModel
+from sqlalchemy.orm import Session, selectinload
 from sqlalchemy import select
 import traceback
 
@@ -11,15 +11,17 @@ def get_file_tipes_repo(session: Session):
         query = (
             select(FileTypeModel)
             .options(
-                joinedload(FileTypeModel.mime)
+                selectinload(FileTypeModel.mime_type_extension)
+                .selectinload(MimeTypeExtensionTable.extension),
+                
+                selectinload(FileTypeModel.mime_type_extension)
+                .selectinload(MimeTypeExtensionTable.mime_type)
             )
         )
 
         result = session.execute(query)
 
-        file_tipes = result.scalars().all()
-
-        return file_tipes
+        return result.unique().scalars().all()
 
     except:
 

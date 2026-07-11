@@ -1,6 +1,7 @@
 # Archivos
 .env
 show_routes.py
+create_db.py
 
 # Carpetas
 venv/

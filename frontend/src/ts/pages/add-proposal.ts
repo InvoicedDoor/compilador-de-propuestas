@@ -1,6 +1,8 @@
 import { verifyAuth } from "../functions/verifyAuth.js";
 import { getInfo, uploadInfo, modifyInfo } from "../functions/apiConnection.js";
 import { showToast } from "../components/notifications.js";
+import { createFileOption } from "../components/fileTypeButton.js";
+import FileTypeModel from "../models/fileType.model.js";
 
 /* ===================== TIPOS ===================== */
 
@@ -28,11 +30,18 @@ if (!token) {
 verifyAuth(token);
 
 /* ===================== STATE ===================== */
+let fileTypes: FileTypeModel[] = [];
 
-const fileTypes: string[] = [];
+(async () => {
+    const data = await getInfo("file-tipes", token)
+    let jsonData = await data.json() || [];
+    fileTypes = jsonData["data"] || [];
+    fileTypes.length;
+})();
 const selectedFiles: File[] = [];
 const metadatos: Metadata[] = [];
 const previewUrls: Preview[] = [];
+
 
 const imagesContainer = document.getElementById("show_files_container") as HTMLElement;
 
@@ -45,6 +54,7 @@ let temporalId: number = 1;
 const processFiles = (files: FileList): void => {
 
     for (let i = 0; i < files.length; i++) {
+        let isAllowed = false
         const file = files[i];
 
         const exists = selectedFiles.find(f =>
@@ -58,20 +68,31 @@ const processFiles = (files: FileList): void => {
             continue;
         }
 
-        selectedFiles.push(file);
+        fileTypes.map(type => {
+            if (file.name.includes(type.mime.extension) && !isAllowed) {
+                selectedFiles.push(file);
 
-        previewUrls.push({
-            id: temporalId,
-            url: URL.createObjectURL(file),
+                previewUrls.push({
+                    id: temporalId,
+                    url: URL.createObjectURL(file),
+                });
+
+                metadatos.push({
+                    id: temporalId,
+                    type: file.type,
+                    name: file.name
+                });
+
+                temporalId++;
+                isAllowed = true;
+            } 
+            
         });
 
-        metadatos.push({
-            id: temporalId,
-            type: file.type,
-            name: file.name
-        });
+        if (!isAllowed)
+            alert(`El archivo ${file.name} no está permitido.`);
 
-        temporalId++;
+        isAllowed = false;
     }
 
     loadFilesOnContainer();
@@ -85,7 +106,6 @@ const loadFilesOnContainer = (): void => {
     imagesContainer.innerHTML = "";
 
     for (let count = 0; count < previewUrls.length; count++) {
-
         const container = document.createElement("div");
         container.className = "file-item";
 
@@ -107,30 +127,15 @@ const loadFilesOnContainer = (): void => {
         let element = document.createElement("img");
 
         const file = metadatos[count];
-        const mime = typeof file.type === "string" ? file.type : "image/*";
 
-        if (mime.startsWith("image/")) {
-            element.src = previewUrls[count].url;
+        fileTypes.map(type => {
+            if (file.type.includes(type.mime.extension)) {
+                element.src = type.mime.category === "1" ? previewUrls[count].url : type.mime.icon;
+                const option = createFileOption(type.description);
+                typeFileSelect.appendChild(option);
+            }
 
-            typeFileSelect.appendChild(createFileOption("Portada"));
-            typeFileSelect.appendChild(createFileOption("Imagen"));
-
-        } else if (mime === "application/pdf") {
-            element.src = "/icons/pdf.svg";
-            typeFileSelect.appendChild(createFileOption("Documento"));
-
-        } else if (mime.includes("spreadsheet") || file.name.endsWith(".xlsx")) {
-            element.src = "/icons/excel.svg";
-            typeFileSelect.appendChild(createFileOption("Cálculo"));
-
-        } else if (mime.includes("word") || file.name.endsWith(".docx")) {
-            element.src = "/icons/word.svg";
-            typeFileSelect.appendChild(createFileOption("Documento"));
-
-        } else {
-            element.src = "/icons/file.svg";
-            typeFileSelect.appendChild(createFileOption("Documento"));
-        }
+        });
 
         element.className = "file";
 
@@ -161,15 +166,6 @@ const loadFilesOnContainer = (): void => {
 
         imagesContainer.appendChild(container);
     }
-};
-
-/* ===================== HELPERS ===================== */
-
-const createFileOption = (fileType: string): HTMLOptionElement => {
-    const option = document.createElement("option");
-    option.text = fileType;
-    option.value = fileType;
-    return option;
 };
 
 /* ===================== EVENTS ===================== */
@@ -224,7 +220,7 @@ const handleSendProposal = async (event: Event): Promise<void> => {
         });
 
         const token = localStorage.getItem("token") ?? "";
-        const res = await uploadInfo("proposal/", token, body);
+        const res = await uploadInfo("proposal", token, body);
         const result = await res.json();
 
         if (!res.ok) {

@@ -1,11 +1,13 @@
-from ..services.proposal_service import add_proposal_service, get_proposals_from_admin_service
+from ..services.proposal_service import add_proposal_service, get_proposals_service
 from ..dtos.proposal_dto import ProposalDto
 from ..models.proposal_model import ProposalFilter
+from ..models.user_model import RowUser
 from src.utilities.logger.logger import Logger
 from src.utilities.middlewares.veryfy_authentication import verify_authentication
 from src.utilities.handlers.http_exceptions import *
 from src.utilities.handlers.http_success import *
 from jwt import decode
+from json import loads
 from flask import Blueprint, request
 from config import Config
 import traceback
@@ -20,7 +22,9 @@ MAX_SIZE = 5 * 1024 * 1024
 def get_all_proposals_route():
     try:
         proposal: ProposalFilter = ProposalFilter()
-        data = get_proposals_from_admin_service(proposal)
+
+        data = get_proposals_service(RowUser(**request.user), proposal)
+        print(data)
 
         return OK("Datos encontrados.", data).to_response()
     
@@ -31,33 +35,43 @@ def get_all_proposals_route():
         Logger.add_to_log('error', traceback.format_exc())
         raise InternalServerError('Error')
 
-@main.post('/')
+@main.post('')
 @verify_authentication
 def send_proposals_route():
+    metadata_count = 0
+    metadata = []
     try:
         data = request.form
+
+        metadata_raw = request.form.get("metadata")
+        documentation = request.files.getlist("proposal_documentation")
 
         if not data.get('proposal_title'): 
             raise BadRequest("El titulo no debe estar vacío.")
 
-        files = []
         errors = []
+        files = []
 
-        for file in request.files.getlist("proposal_documentation"):
-            if not file:
-                continue
+        if metadata_raw and documentation:
+            metadata = loads(metadata_raw)
 
-            file.seek(0, 2)
-            size = file.tell()
-            file.seek(0)
+            for file in documentation:
+                if not file or not metadata[metadata_count]:
+                    continue
 
-            if size > MAX_SIZE:
-                raise BadRequest(f"{file.filename} demasiado grande.")
+                file.seek(0, 2)
+                size = file.tell()
+                file.seek(0)
 
-            files.append(file)
+                if size > MAX_SIZE:
+                    raise BadRequest(f"{file.filename} demasiado grande.")
 
-        if errors:
-            raise BadRequest(errors)
+                files.append(file)
+
+                metadata_count += 1
+
+            if errors:
+                raise BadRequest(errors)
 
         token = request.headers.get("Authorization")
         payload = decode(token.split(" ")[1], key, algorithms=['HS256'])
@@ -65,9 +79,9 @@ def send_proposals_route():
         proposal_description=data["proposal_description"],
         proposal_manager=payload["id"])
 
-        service_message =  add_proposal_service(payload["id"], proposal, files)
+        service_message = add_proposal_service(payload["id"], proposal, files, metadata)
 
-        return Created(service_message).to_response()
+        return Created(message=service_message).to_response()
     
     except DomainError as domErr:
         return domErr.to_dict()

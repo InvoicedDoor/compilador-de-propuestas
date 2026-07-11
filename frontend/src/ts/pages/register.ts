@@ -1,14 +1,14 @@
-import { auth } from "../functions/apiConnection.js";
+import { register } from "../functions/apiConnection.js";
 import { showToast } from "../components/notifications.js";
 
-const requestBody = {
-
-    name: "",
-    lastname: "",
-    mail: "",
-    password: "",
-    confirmPassword: ""
-} 
+const requestBody: Record<string, string> = {
+  name: "",
+  first_lastname: "",
+  second_lastname: "",
+  mail: "",
+  password: "",
+  confirm_password: ""
+}
 
 const handleInput = (event: Event) => {
     event.preventDefault();
@@ -16,50 +16,28 @@ const handleInput = (event: Event) => {
     {
         const target = event.target as HTMLInputElement;
 
-        switch (target.id)
-        {
-            case "name":
-                requestBody.name = target.value;
-            case "lastname":
-                requestBody.lastname = target.value;
-            case "mail":
-                requestBody.mail = target.value;
-            case "password":
-                requestBody.password = target.value;
-            case "confirm-password":
-                requestBody.confirmPassword = target.value;
-            _:
-                return;
-        }
+        requestBody[target.id] = target.value;
     } catch (e)
     {
         console.log("Error al ingresar los valores");
     }
 }
 
-const handleLogin = async (event: any) => {
+const handleRegister = async (event: any) => {
     event.preventDefault();
 
     try {
 
-        const body = requestBody
-
-        const res = await auth(body)
-
-        const result = await res.json();
+        const res = await register("register", requestBody);
 
         if (!res.ok) {
-            showToast(result.message, "error");
+            showToast("No se pudo registrar al usuario.", "warning");
             return;
         }
 
-
-        localStorage.setItem("token", result.data)
-
-        showToast("Bienvenido.")
-
+        showToast("Registro realizado correctamente.");
         setTimeout(() => {
-            window.location.href = "/";
+            window.location.href = "/html/login.html";
         }, 1000);
     } catch (error) {
         showToast("Error de conexión.", "error");
@@ -77,4 +55,4 @@ declare global {
 }
 
 window.handleInput = handleInput;
-window.handleRegister = handleLogin;
+window.handleRegister = handleRegister;

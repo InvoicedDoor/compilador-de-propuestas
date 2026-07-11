@@ -1,7 +1,7 @@
 import { auth } from "../functions/apiConnection.js";
 import { showToast } from "../components/notifications.js";
 
-const requestBody = {
+const requestBody: Record<string, string> = {
     mail: "",
     password: ""
 }
@@ -11,15 +11,7 @@ const handleInput = (event: Event) => {
     try
     {
         const target = event.target as HTMLInputElement;
-        switch (target.id)
-        {
-            case "mail":
-                requestBody.mail = target.value;
-            case "password":
-                requestBody.mail = target.value;
-            _:
-                return;
-        }   
+        requestBody[String(target.id)] = target.value;
     } catch (e)
     {
         console.log("Error al ingresar los valores")
@@ -38,18 +30,18 @@ const handleLogin = async (event: any) => {
         const result = await res.json();
 
         if (!res.ok) {
-            showToast(result.message, "error");
+            // showToast(result.message, "error");
             return;
         }
 
 
         localStorage.setItem("token", result.data)
 
-        showToast("Bienvenido.")
+        // // showToast("Bienvenido.")
 
-        setTimeout(() => {
+        // setTimeout(() => {
             window.location.href = "/";
-        }, 1000);
+        // }, 1000);-
     } catch (error) {
         showToast("Error de conexión.", "error");
         console.error(error);

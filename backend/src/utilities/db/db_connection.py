@@ -9,7 +9,8 @@ DATABASE_URL = (
     f"mysql+pymysql://"
     f"{os.getenv('USER')}:"
     f"{os.getenv('PASSWORD')}@"
-    f"{os.getenv('HOST')}/"
+    f"{os.getenv('HOST')}:"
+    f"{os.getenv('PORT')}/"
     f"{os.getenv('DATABASE')}"
 )
 

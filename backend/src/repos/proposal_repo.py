@@ -1,6 +1,7 @@
 from src.utilities.logger.logger import Logger
-from src.models.proposal_model import Proposal, ProposalFiles, ProposalFilter, ProposalUsersModel
-from sqlalchemy.orm import Session
+from src.models.proposal_model import Proposal, ProposalFiles, ProposalFilter, ProposalUsersModel, ProposalFilesDto
+from src.models.user_model import User
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import select
 from pymysql.cursors import DictCursor
 import traceback
@@ -34,6 +35,39 @@ def get_all_propsals(session: Session, proposal: ProposalFilter):
     except Exception as ex:
         Logger.add_to_log('error', traceback.format_exc())
         raise ValueError("Error al obtener la contraseña.")
+    
+def get_all_user_propsal(session: Session, user_id: int, proposal: ProposalFilter):
+    try:
+        filters = {}
+
+        if proposal.id is not None:
+            filters["id"] = proposal.id
+
+        if proposal.title is not None:
+            filters["title"] = proposal.title
+
+        if proposal.description is not None:
+            filters["description"] = proposal.description
+
+        if proposal.active is not None:
+            filters["active"] = proposal.active
+
+        query = (select(Proposal)
+        .filter_by(**filters)
+        .join(Proposal.proposal_user, isouter=True)
+        .join(ProposalUsersModel.users, isouter=True)
+        .where(User.id == user_id))
+        
+
+        result = session.execute(query)
+
+        proposals = result.unique().scalars()
+
+        return proposals.all()
+
+    except Exception as ex:
+        Logger.add_to_log('error', traceback.format_exc())
+        raise ValueError("Error al obtener la contraseña.")
 
 
 # Función para obtener los archivos de una propuesta.
@@ -53,18 +87,18 @@ def get_propsal_files(session: Session, proposal_id: int):
         raise ValueError("Error al obtener la contraseña.")
 
 
-# Función para obtener los datos del usuario
-def get_all_user_propsal(session: Session):
-    query = "SELECT * FROM ;"
+# # Función para obtener los datos del usuario
+# def get_all_user_propsal(session: Session):
+#     query = "SELECT * FROM ;"
     
-    cursor = None
+#     cursor = None
     
-    try:
-        pass
+#     try:
+#         pass
 
-    except Exception as ex:
-        Logger.add_to_log('error', traceback.format_exc())
-        raise ValueError("Error al obtener la contraseña.")
+#     except Exception as ex:
+#         Logger.add_to_log('error', traceback.format_exc())
+#         raise ValueError("Error al obtener la contraseña.")
 
 # Función para obtener una propuesta según su ID.
 def get_propsal_by_id(session: Session, proposal_id):
@@ -98,13 +132,9 @@ def send_propsal(session: Session, title: str, description: str):
 
 
 # Función para agregar un documento a una propuesta.
-def add_proposal_files(session: Session, proposal_id: int, filename: str, path: str):
+def add_proposal_files(session: Session, proposal_files_dto: ProposalFilesDto):
     try:
-        new_proposal_file = ProposalFiles(
-            proposal_id=proposal_id,
-            filename=filename,
-            path=path
-        )
+        new_proposal_file = ProposalFiles(**proposal_files_dto.model_dump())
 
         session.add(new_proposal_file)
 

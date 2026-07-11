@@ -16,11 +16,11 @@ def get_file_tipes_service():
                 "id": file.id,
                 "description": file.description,
                 "mime": {
-                    "id": file.mime.id,
-                    "mime_pattern": file.mime.mime_pattern,
-                    "extension": file.mime.extension,
-                    "icon": file.mime.icon,
-                    "category": file.mime.category
+                    "id": file.mime_type_id,
+                    "mime_pattern": file.mime_type_extension.mime_type.mime_pattern,
+                    "extension": file.mime_type_extension.extension.extension,
+                    "icon": file.mime_type_extension.mime_type.icon,
+                    "category": file.mime_type_extension.mime_type.category_id
                 },
                 "is_main_image": file.is_main_image,
                 "active": file.active

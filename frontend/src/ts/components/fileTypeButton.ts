@@ -1,7 +1,7 @@
-import { getInfo } from "../functions/apiConnection"
+export const createFileOption = (fileType: string) => {
+    const option = document.createElement("option");
+    option.text = fileType;
+    option.value = fileType;
 
-const token: string = ""
-
-export const fileTypeButton = () => {
-    const fileTypes = getInfo("file-types", token)
+    return option;
 }

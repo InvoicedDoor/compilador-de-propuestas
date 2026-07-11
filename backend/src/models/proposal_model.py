@@ -38,7 +38,7 @@ class ProposalUsersModel(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users_table.id"))
     proposal_id: Mapped[int] = mapped_column(ForeignKey("proposal_table.id"))
-    active: Mapped[bool] = mapped_column(Boolean)
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
 
     users: Mapped[list["User"]] = relationship(
         "User",
@@ -55,4 +55,18 @@ class ProposalFilter(BaseModel):
     id: Optional[int] = Field(None)
     title: Optional[str] = Field(None)
     description: Optional[str] = Field(None)
+    active: Optional[bool] = Field(None)
+
+class ProposalFilesDto(BaseModel):
+    proposal_id: int = Field(...)
+    filename: str = Field(...)
+    path: str = Field(...)
+    file_type_id: int = Field(...)
+
+class ProposalFilesFilter(BaseModel):
+    id: Optional[int] = Field(None)
+    proposal_id: int = Field(...)
+    filename: str = Field(...)
+    path: str = Field(...)
+    file_type_id: int = Field(...)
     active: Optional[bool] = Field(None)

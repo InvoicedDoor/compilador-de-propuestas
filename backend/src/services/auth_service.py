@@ -77,17 +77,17 @@ def change_password_service(mail: str, old_password: str = None, new_password: s
     try:
         credentials = get_user_by_mail(session, mail)
         if not credentials:
-            return NotFound("El correo no está registrado.")
+            raise NotFound("El correo no está registrado.")
         
         is_valid = validate_password(old_password, credentials.password)
 
         if not is_valid:
-            return BadRequest("No capturaste la contraseña correcta. No puedes cambiar la contraseña sin las credenciales correctas.")
+            raise BadRequest("No capturaste la contraseña correcta. No puedes cambiar la contraseña sin las credenciales correctas.")
         
         hashed_password = password_encryption(new_password)
         is_changed = change_password(session, mail, hashed_password)
         if not is_changed:
-            return InternalServerError("No se pudo cambiar la contraseña.")
+            raise InternalServerError("No se pudo cambiar la contraseña.")
         
         return "Contraseña modificada con éxito."
 

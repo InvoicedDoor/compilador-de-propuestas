@@ -1,5 +1,5 @@
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 from src.utilities.db.db_connection import SessionLocal
 from src.models.user_model import RowUser, User
 from src.models.auth_model import Auth
@@ -19,6 +19,27 @@ def get_users():
     except Exception as ex:
         Logger.add_to_log('error', traceback.format_exc())
         raise ValueError(f"Error: {ex}")
+    
+def validate_user(user: RowUser):
+    session = SessionLocal()
+    try:
+        query = (select(User)
+                 .options(
+                     selectinload(User.credentials)
+                     .selectinload(Auth.user)
+                 )
+                 .where(User.id == user.id
+                        and Auth.mail == user.mail
+                        and User.rol_id == user.rol
+                        and user.rol == 1))
+        
+        result = session.execute(query)
+
+        users = result.unique().scalars()
+
+        return len(users.all()) < 0
+    except:
+        Logger.add_to_log('error', traceback.format_exc())
 
 def get_user_by_id(user_id: int):
     session = SessionLocal()

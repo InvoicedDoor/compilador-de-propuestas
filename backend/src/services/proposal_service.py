@@ -1,8 +1,10 @@
-from ..repos.proposal_repo import add_relation_user_proposal, send_propsal, get_all_propsals, get_propsal_files
+from ..repos.proposal_repo import add_relation_user_proposal, send_propsal, get_all_propsals, get_all_user_propsal
+from ..repos.user_repo import validate_user
 from src.utilities.handlers.http_exceptions import *
 from src.utilities.middlewares.verify_files import verify_extension, verify_mime, clean_name, create_secure_name
 from src.utilities.files_manager.files_manager import process_file
 from src.utilities.logger.logger import Logger
+from src.models.user_model import RowUser
 from ..dtos.proposal_dto import ProposalDto
 from ..models.proposal_model import ProposalFilter
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -11,32 +13,51 @@ from src.utilities.db.db_connection import SessionLocal
 
 BACKEND_URL = "http://localhost:5000"
 
-def get_proposals_from_admin_service(proposal: ProposalFilter):
+def get_proposals_service(user: RowUser, proposal: ProposalFilter):
     session = SessionLocal()
     try:
-        pass
-        proposal_list = get_all_propsals(session, proposal)
         proposal_format = []
+        if validate_user(user):
+            proposal_list = get_all_propsals(session, proposal)
 
-        if len(proposal_list) == 0:
-            raise NotFound("No hay propuestas aún.", [])
+            if len(proposal_list) == 0:
+                raise NotFound(message="No hay propuestas aún.", data=[])
 
-        for data in proposal_list:
-            files = [{
-                "filename": file.filename,
-                "source": file.path
-            } for file in data.proposal_files]
+            for data in proposal_list:
+                files = [{
+                    "filename": file.filename,
+                    "source": file.path
+                } for file in data.proposal_files]
 
-            proposal_format.append({
-                "title": data.title,
-                "description": data.description,
-                "source": files
-            })
+                proposal_format.append({
+                    "id": data.id,
+                    "title": data.title,
+                    "description": data.description,
+                    "source": files
+                })
+
+        else:
+            proposal_list = get_all_user_propsal(session, user.id, proposal)
+            if len(proposal_list) == 0:
+                raise NotFound(message="No hay propuestas aún.", data=[])
+
+            for data in proposal_list:
+                files = [{
+                    "filename": file.filename,
+                    "source": file.path
+                } for file in data.proposal_files]
+
+                proposal_format.append({
+                    "id": data.id,
+                    "title": data.title,
+                    "description": data.description,
+                    "source": files
+                })
 
         return proposal_format
     
     except DomainError as domErr:
-        return domErr
+        raise domErr
     
     except Exception as ex:
         Logger.add_to_log("error", f"Error: {ex}")
@@ -52,7 +73,7 @@ def get_proposals_from_users_service(proposal: ProposalFilter):
     except:
         pass
 
-def add_proposal_service(user_id: int, proposal: ProposalDto, proposal_files):
+def add_proposal_service(user_id: int, proposal: ProposalDto, proposal_files, metadata):
     session = SessionLocal()
     try:
         proposalModel: ProposalFilter = ProposalFilter(title=proposal.proposal_title,description=proposal.proposal_description,)
@@ -71,6 +92,10 @@ def add_proposal_service(user_id: int, proposal: ProposalDto, proposal_files):
 
         if not relation_ok:
             raise InternalServerError("No se pudo crear la relación usuario-propuesta.")
+        
+        if not proposal_files:
+            session.commit()
+            return "Propuesta vacía creada exitosamente."
 
         results = []
 

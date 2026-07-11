@@ -1,5 +1,7 @@
+const BACKEND_uRL = "http://localhost:5000";
+
 export const getInfo = async (endpoint: string, token: string) => {
-    const res = await fetch(`/api/${endpoint}`, {
+    const res = await fetch(`${BACKEND_uRL}/api/${endpoint}`, {
         headers: {
             Authorization: `Bearer ${token}`
         }
@@ -9,7 +11,7 @@ export const getInfo = async (endpoint: string, token: string) => {
 }
 
 export const uploadInfo = async (endpoint: string, token: string, data: any) => {
-    const res = await fetch(`/api/${endpoint}`, {
+    const res = await fetch(`${BACKEND_uRL}/api/${endpoint}`, {
         headers: {
             Authorization: `Bearer ${token}`
         },
@@ -21,7 +23,7 @@ export const uploadInfo = async (endpoint: string, token: string, data: any) => 
 }
 
 export const modifyInfo = async (endpoint: string, token: string, data: any, elementId: Number) => {
-    const res = await fetch(`/api/${endpoint}/${elementId}`, {
+    const res = await fetch(`${BACKEND_uRL}/api/${endpoint}/${elementId}`, {
         headers: {
             "Authorization": `Bearer ${token}`,
         },
@@ -33,11 +35,23 @@ export const modifyInfo = async (endpoint: string, token: string, data: any, ele
 }
 
 export const auth = async (data: any) => {
-    const res = await fetch(`/api/auth`, {
+    const res = await fetch(`${BACKEND_uRL}/api/auth`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
         },
+        body: JSON.stringify(data)
+    });
+
+    return res;
+}
+
+export const register = async (endpoint: string, data: any) => {
+    const res = await fetch(`${BACKEND_uRL}/api/${endpoint}`, {
+        headers: {
+            "Content-Type": "application/json"
+        },
+        method: "POST",
         body: JSON.stringify(data)
     });
 

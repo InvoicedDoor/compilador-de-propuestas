@@ -6,7 +6,8 @@ COPY package*.json ./
 RUN npm install
 
 COPY . .
-RUN npx tsc --watch &
+
+RUN npx tsc
 
 FROM nginx:stable-alpine
 
