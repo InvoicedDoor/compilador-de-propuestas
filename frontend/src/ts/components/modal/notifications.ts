@@ -1,6 +1,15 @@
-type ToastType = "success" | "error" | "warning" | "info";
+declare function Toastify(options: {
+    text: string;
+    duration?: number;
+    gravity?: "top" | "bottom";
+    position?: "left" | "center" | "right";
+    stopOnFocus?: boolean;
+    style?: Record<string, string>;
+}): {
+    showToast(): void;
+};
 
-declare const Toastify: any; // 👈 solución rápida (luego te explico mejor)
+type ToastType = "success" | "error" | "warning" | "info";
 
 export const showToast = (
     message: string,

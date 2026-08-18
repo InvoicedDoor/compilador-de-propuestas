@@ -1,9 +1,14 @@
+
+import { proposalFileRow } from "../components/element/proposalFileRow.js";
+import { userMemberRow } from "../components/element/userMemberRow.js";
+import { getInfo, uploadInfo } from "../functions/apiConnection.js";
 import { verifyAuth } from "../functions/verifyAuth.js";
-import { getInfo, uploadInfo, modifyInfo } from "../functions/apiConnection.js";
-import { showToast } from "../components/modal/notifications.js";
 import { createFileOption } from "../components/element/fileTypeButton.js";
+import { FileInterface, Metadata, Preview } from "../interfaces/file.interface.js";
+import { UserMemberInterface } from "../interfaces/userMember.interface.js";
 import FileTypeModel from "../models/fileType.model.js";
-import { Metadata, Preview } from "../interfaces/file.interface.js";
+import { showToast } from "../components/modal/notifications.js";
+import { pageIndexList } from "../components/element/page-index-list.js";
 
 /* ===================== AUTH ===================== */
 
@@ -18,24 +23,28 @@ verifyAuth(token);
 /* ===================== STATE ===================== */
 let fileTypes: FileTypeModel[] = [];
 
-(async () => {
-    const data = await getInfo("file-tipes", token)
-    let jsonData = await data.json() || [];
-    fileTypes = jsonData["data"] || [];
-})();
+const params = new URLSearchParams(window.location.search);
+const projectId: number = Number(params.get("id")) || 0;
+let proposalInfo: any = null;
+let membersInfo: any = [];
+let filesInfo: Array<FileInterface> = [];
+const proposalTitleElement = document.getElementById("project-title");
+const proposalDescriptionElement = document.getElementById("project-description");
+const proposalFiles = document.getElementById("file-list-element");
+
 const selectedFiles: File[] = [];
 const metadatos: Metadata[] = [];
 const previewUrls: Preview[] = [];
 
 
 const imagesContainer = document.getElementById("show_files_container") as HTMLElement;
-
 let proposalTitle: string = "";
 let proposalDescription: string = "";
 let temporalId: number = 1;
+let filePage = 1;
+let totalPages = 1;
 
-/* ===================== FILES ===================== */
-
+/* ===================== RENDER ===================== */
 const processFiles = (files: FileList): void => {
 
     for (let i = 0; i < files.length; i++) {
@@ -70,8 +79,8 @@ const processFiles = (files: FileList): void => {
 
                 temporalId++;
                 isAllowed = true;
-            } 
-            
+            }
+
         });
 
         if (!isAllowed)
@@ -85,7 +94,19 @@ const processFiles = (files: FileList): void => {
     imagesContainer.classList.replace("no-show-files", "show-files");
 };
 
-/* ===================== RENDER ===================== */
+const chargeFileList = (startCount: number, endCount: number) => {
+    for (let pageCount = startCount; pageCount < endCount; pageCount++)
+    {
+        if (pageCount > endCount || pageCount >= filesInfo.length)
+        {
+            return;
+        }
+
+        let rowFile = proposalFileRow(filesInfo[pageCount]);
+
+        proposalFiles?.appendChild(rowFile);
+    }
+}
 
 const loadFilesOnContainer = (): void => {
     imagesContainer.innerHTML = "";
@@ -119,7 +140,6 @@ const loadFilesOnContainer = (): void => {
                 const option = createFileOption(type.description);
                 typeFileSelect.appendChild(option);
             }
-
         });
 
         element.className = "file";
@@ -189,51 +209,110 @@ const handleInputDescription = (event: Event): void => {
     proposalDescription = (event.target as HTMLInputElement).value;
 };
 
-/* ===================== SUBMIT ===================== */
+const changeFilePage = (page: number) => {
+    filePage = page;
+}
 
-const handleSendProposal = async (event: Event): Promise<void> => {
-    event.preventDefault();
+const handleChangePageIndex = (indexPage: number) => {
+    if (!proposalFiles)
+        return;
 
-    try {
-        const body = new FormData();
+    proposalFiles.innerHTML = "";
+    filePage = indexPage;
+    
+    if (filePage === indexPage)
+    {
+        let startCount = 5 * filePage;
+        let endCount = (filePage + 1) * 5;
+        chargeFileList(startCount, endCount);
+    }
+}
 
-        body.append("proposal_title", proposalTitle);
-        body.append("proposal_description", proposalDescription);
+const handleUploadFiles = async (event: Event): Promise<void> => {
+    try
+    {
+        const requestBody = new FormData();
 
-        selectedFiles.forEach(file => {
-            body.append("proposal_documentation", file);
-        });
-
-        const res = await uploadInfo("proposal", token, body);
-        const result = await res.json();
-
-        if (!res.ok) {
-            showToast(result.message, "warning");
+        if (selectedFiles.length < 1)
+        {
+            showToast("No hay archivos cargados.", "warning")
             return;
         }
 
-        showToast(result.message);
+        selectedFiles.forEach(file => {
+            requestBody.append("proposal_documentation", file);
+        });
 
-        selectedFiles.length = 0;
-        previewUrls.length = 0;
-        metadatos.length = 0;
+        const res = await uploadInfo(`proposal/${projectId}`, token, requestBody);
 
-        imagesContainer.classList.replace("show-files", "no-show-files");
+        const jsonResult = await res.json();
 
-        proposalTitle = "";
-        proposalDescription = "";
-        temporalId = 1;
+        if (!res.ok)
+        {
+            requestBody.delete("proposal_documentation");
+            showToast(jsonResult.message, "warning");
+            return
+        }
+            
+        showToast("Archivos cargados correctamente.", "success");
 
-    } catch (error) {
-        showToast("Error inesperado.", "error");
-        console.error(error);
+        location.reload();
+    } catch (e)
+    {
+        showToast("Error al enviar los documentos. Informe a soporte.", "error");
     }
-};
+}
+
+(async () => {
+    document.title = `Proyecto ${projectId}`;
+    let startCount = 5 * (filePage - 1);
+    let endCount = filePage * 5;
+    
+    const proposalInfoRow = await getInfo(`proposal/${projectId}`, token);
+    const proposalMembersRow = await getInfo(`proposal/proposal-users/${projectId}`, token);
+
+    const proposalFilesRow = await getInfo(`proposal/proposal-files/${projectId}`, token);
+
+    const data = await getInfo("file-tipes", token)
+    
+    if (!proposalInfoRow.ok || !proposalMembersRow.ok) {
+        return
+    }
+
+    const dataInfoJson = await proposalInfoRow.json();
+    const dataMembersJson = await proposalMembersRow.json();
+    const filesJson = await proposalFilesRow.json();
+    let jsonData = await data.json() || [];
+
+    fileTypes = jsonData["data"] || [];
+    proposalInfo = dataInfoJson["data"];
+    membersInfo = dataMembersJson["data"];
+    filesInfo = filesJson["data"];
+
+    totalPages = Math.ceil(filesInfo.length / 5);
+
+    proposalTitleElement!.textContent = proposalInfo.title;
+    proposalDescriptionElement!.textContent = proposalInfo.description;
+
+    const userMembersTable = document.getElementById("user-members-body");
+
+    membersInfo.map((member: UserMemberInterface) => {
+        let rowMember = userMemberRow(member);
+        userMembersTable?.appendChild(rowMember);
+    });
+
+    chargeFileList(startCount, endCount);
+
+    pageIndexList("file-pagination", totalPages, handleChangePageIndex)
+})();
 
 /* ===================== GLOBAL ===================== */
 
 declare global {
     interface Window {
+        handleChangePageIndex: (numberPage: number) => void;
+        changeFilePage: (page: number) => void;
+        handleUploadFiles: (event: Event) => void;
         handleSendProposal: (event: Event) => void;
         handleInputTitle: (event: Event) => void;
         handleInputDescription: (event: Event) => void;
@@ -244,10 +323,12 @@ declare global {
     }
 }
 
-window.handleSendProposal = handleSendProposal;
 window.handleInputTitle = handleInputTitle;
 window.handleInputDescription = handleInputDescription;
 window.handleFileUpload = handleFileUpload;
 window.handleDrop = handleDrop;
 window.handleDragOver = handleDragOver;
 window.handleDragLeave = handleDragLeave;
+window.handleUploadFiles = handleUploadFiles;
+window.changeFilePage = changeFilePage;
+window.handleChangePageIndex = handleChangePageIndex;

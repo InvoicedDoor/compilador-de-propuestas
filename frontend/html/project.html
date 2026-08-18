@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/css/general-style.css">
+    <link rel="stylesheet" href="/css/navbar.css">
+    <link rel="stylesheet" href="/css/modal.css">
+    <link rel="stylesheet" href="/css/add-files-style.css">
+    <link rel="icon" href="/icons/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/css/toastify.css">
+    <link rel="stylesheet" href="/css/project.css">
+    <link rel="stylesheet" href="/css/page-index-style.css">
+    <title>Proyecto</title>
+</head>
+
+<body id="main-body">
+    <nav id="navbar" class="navbar-style"></nav>
+    <div class="project-info">
+        <div class="project-header">
+            <h2 id="project-title"></h2>
+        </div>
+        <div class="project-content">
+            <div id="left-bar" class="left-content-section"></div>
+            <div id="center-bar" class="center-content-section">
+                <div class="project-image-container">
+                    <img class="project-image" src="/icons/file.svg" alt="Imagen del Proyecto">
+                </div>
+                <div class="project-description">
+                    <p id="project-description">Sin contenido</p>
+                </div>
+                <div class="project-members">
+                    <div class="members-space">
+                        <table class="user-members">
+                            <thead>
+                                <tr>
+                                    <th>Id</th>
+                                    <th>Nombre de Usuario</th>
+                                    <th>Rol</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="user-members-body" class="table-body"></tbody>
+                        </table>
+                    </div>
+                    <div class="end-space">
+                        <button class="add-element-button user-members" onclick="openModal()">Agregar</button>
+                    </div>
+                </div>
+            </div>
+            <div id="right-bar" class="right-content-section">
+                <div class="actions-header">
+                    <h3>Archvios</h3>
+                </div>
+                <ul id="file-list-element" class="files-list"></ul>
+                <div id="file-pagination" class="page-index-bar">
+                </div>
+                <button onclick="openModal()" class="add-element-button">Agregar</button>
+            </div>
+        </div>
+    </div>
+    <div id="modal-overlay" class="modal-overlay">
+        <div class="window-modal-small">
+            <div class="modal-header">
+                <img class="action-close-icon-short" alt="" onclick="closeModal()">
+            </div>
+            <div id="modal-body" class="modal-body">
+                <div class="upload-files-container">
+                    <div class="files-container-full-screen no-show-files" id="show_files_container"></div>
+                    <div class="input-container-full-screen">
+                        <h3>Documentos complementarios</h3>
+                        <div class="upload-images-drop">
+                            <div class="drop-area" draggable="true" ondragover="handleDragOver(event)"
+                                ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+                                <input class="files-input" type="file" name="" id="images"
+                                    onchange="handleFileUpload(event)" hidden />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="input-container-full-screen">
+                <button class="upload-button" onclick="handleUploadFiles(event)">Subir archivos</button>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
+<script>
+    function closeModal() {
+        const overlay = document.getElementById("modal-overlay");
+        overlay.style.display = "none";
+    }
+
+    function openModal() {
+        const overlay = document.getElementById("modal-overlay");
+        overlay.style.display = "flex";
+    }
+</script>
+<script type="module" src="/dist/js/functions/apiConnection.js"></script>
+<script type="module" src="/dist/js/components/modal.js"></script>
+<script type="module" src="/dist/js/pages/project.js"></script>
+<script src="/dist/js/components/toastify.js"></script>
+<script type="module">
+    import { navBarComponent } from "/dist/js/components/navbar.js";
+
+    navBarComponent("Dónovan Hernández");
+
+    const userContainer = document.querySelector(".user-identification");
+
+    userContainer.addEventListener("mouseleave", () => {
+        const modal = userContainer.querySelector(".modal-space");
+        if (modal) modal.remove();
+    });
+</script>

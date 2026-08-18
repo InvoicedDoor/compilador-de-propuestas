@@ -36,8 +36,8 @@ services:
       DB_NAME: "${DB_NAME:-db_app}"
       DB_USER: "${DB_USER:-test}"
       DB_PASSWORD: "${DB_PASS:-test}"
-      DB_HOST: "${DB_HOST:-localhost}"
-      DB_PORT: "${DB_PORT:-3306}:3306"
+      DB_HOST: "${DB_HOST:-mysql}"
+      DB_PORT: "${DB_PORT:-3306}"
 
     container_name: "${APP_NAME:-app}-backend"
 

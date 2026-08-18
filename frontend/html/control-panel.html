@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="/dist/css/control-panel-style.css">
     <link rel="stylesheet" href="/dist/css/navbar.css">
     <link rel="icon" href="/dist/icons/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/css/toastify.css">
 </head>
 
 <body>
@@ -45,7 +46,9 @@
         </section>
     </div>
 </body>
+</html>
 <script type="module" src="/dist/js/pages/control-panel-script.js"></script>
+<script src="/dist/js/components/toastify.js"></script>
 <script type="module">
     import { navBarComponent } from "/dist/js/components/navbar.js";
 
@@ -58,5 +61,3 @@
         if (modal) modal.remove();
     });
 </script>
-
-</html>

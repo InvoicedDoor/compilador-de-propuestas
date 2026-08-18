@@ -1,13 +1,11 @@
-from ..repos.proposal_repo import add_relation_user_proposal, send_propsal, get_all_propsals, get_all_user_propsal
+from ..repos.proposal_repo import add_relation_user_proposal, send_propsal, get_all_propsals, get_all_user_propsal, get_propsal_by_id, verify_proposal_user, get_proposal_users, get_proposal_files, inactivate_proposal, inactivate_proposal_file
+from src.utilities.files_manager.upload_files_funtion import upload_files
 from ..repos.user_repo import validate_user
 from src.utilities.handlers.http_exceptions import *
-from src.utilities.middlewares.verify_files import verify_extension, verify_mime, clean_name, create_secure_name
-from src.utilities.files_manager.files_manager import process_file
 from src.utilities.logger.logger import Logger
 from src.models.user_model import RowUser
-from ..dtos.proposal_dto import ProposalDto
+from ..dtos.proposal_dto import ProposalDto, ImageMetadata, ProposalUserDto
 from ..models.proposal_model import ProposalFilter
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from src.utilities.db.db_connection import SessionLocal
 
 
@@ -67,11 +65,106 @@ def get_proposals_service(user: RowUser, proposal: ProposalFilter):
         session.close()
 
 
-def get_proposals_from_users_service(proposal: ProposalFilter):
+def get_proposal_by_id_service(user: RowUser, proposal_id: int):
+    session = SessionLocal()
     try:
-        pass
-    except:
-        pass
+        is_valid = verify_proposal_user(session, user["id"], proposal_id)
+
+        if not is_valid:
+            raise BadRequest("No puedes realizar esta acción.")
+
+        proposal = get_propsal_by_id(session, proposal_id)
+
+        formated_proposal = {
+            "id": proposal.id,
+            "title": proposal.title,
+            "description": proposal.description,
+            "active": proposal.active,
+            "files": [
+            {
+                "id": file.id,
+                "filename": file.filename,
+                "path": file.path
+            } for file in proposal.proposal_files]
+        }
+
+        return formated_proposal
+    
+    except DomainError as domErr:
+        raise domErr
+    
+    except Exception as ex:
+        Logger.add_to_log("error", f"Error: {ex}")
+        session.rollback()
+        raise UnprocessableEntity("Error al procesar los archivos.") 
+    finally:
+        session.close()
+
+
+def get_proposal_users_service(user: RowUser, proposal_id: int):
+    session = SessionLocal()
+    try:
+        is_valid = verify_proposal_user(session, user["id"], proposal_id)
+
+        if not is_valid:
+            raise BadRequest("No puedes realizar esta acción.")
+
+        proposal_user: list[ProposalUserDto] = get_proposal_users(session, proposal_id)
+
+        formated_proposal = [{
+            "id": proposal_info.users.id,
+            "name": " ".join(filter(None, [
+                proposal_info.users.name,
+                proposal_info.users.first_lastname,
+                proposal_info.users.second_lastname
+            ])),
+            "rol": {
+                "id": proposal_info.users.rol.id,
+                "rol": proposal_info.users.rol.rol
+            }
+        } for proposal_info in proposal_user]
+
+        return formated_proposal
+    
+    except DomainError as domErr:
+        raise domErr
+    
+    except Exception as ex:
+        Logger.add_to_log("error", f"Error: {ex}")
+        session.rollback()
+        raise UnprocessableEntity("Error al procesar la petición.") 
+    finally:
+        session.close()
+
+
+def get_proposal_files_service(user: RowUser, proposal_id: int):
+    session = SessionLocal()
+    try:
+        is_valid = verify_proposal_user(session, user["id"], proposal_id)
+
+        if not is_valid:
+            raise BadRequest("No puedes realizar esta acción.")
+
+        proposal_files = get_proposal_files(session, proposal_id)
+
+        formated_proposal = [{
+            "id": proposal_file.id,
+            "filename": proposal_file.filename,
+            "path": proposal_file.path
+        } for proposal_file in proposal_files]
+
+        return formated_proposal
+    
+    except DomainError as domErr:
+        raise domErr
+    
+    except Exception as ex:
+        Logger.add_to_log("error", f"Error: {ex}")
+        session.rollback()
+        raise UnprocessableEntity("Error al procesar la petición.") 
+    finally:
+        session.close()
+
 
 def add_proposal_service(user_id: int, proposal: ProposalDto, proposal_files, metadata):
     session = SessionLocal()
@@ -97,42 +190,8 @@ def add_proposal_service(user_id: int, proposal: ProposalDto, proposal_files, me
             session.commit()
             return "Propuesta vacía creada exitosamente."
 
-        results = []
-
-        with ThreadPoolExecutor(max_workers=5) as executor:
-            futures = []
-            futures_map = {}
-
-            for file in proposal_files:
-                verify_extension(file, "La propuesta se creó con éxito pero no se cargaron los archivos.")
-
-                file_bytes = file.read()
-
-                verify_mime(file)
-
-                if not file_bytes:
-                    raise BadRequest("Archivo vacío.")
-
-
-                filename = clean_name(file)
-                secure_name = create_secure_name(filename)
-
-                future = executor.submit(process_file,
-                    file_bytes, 
-                    proposal_id,
-                    secure_name)
-
-                futures.append(future)
-                futures_map[future] = filename
-
-
-            for future in as_completed(futures):
-                try:
-                    results.append(future.result())
-                except Exception as e:
-                    Logger.add_to_log("error", f"Error al procesar el archivo {futures_map[future]}: {e}")
-                    results.append(False)
-
+        results = upload_files(proposal_files, proposal_id)
+        
         if any(r is False for r in results):
             session.rollback()
             raise InternalServerError("Error insertando uno o más archivos.")
@@ -150,3 +209,60 @@ def add_proposal_service(user_id: int, proposal: ProposalDto, proposal_files, me
     
     finally:
         session.close()
+
+
+def add_proposal_files_service(user_id: int, proposal_id: int, proposal_files: list, metadata: list[ImageMetadata]):
+    session = SessionLocal()
+    try:        
+        results = []
+
+        is_valid = verify_proposal_user(session, user_id, proposal_id)
+
+        if not is_valid:
+            raise BadRequest("No puedes realizar esta acción.")
+
+        results = upload_files(session, proposal_files, proposal_id)
+
+        if any(r["status"] is True for r in results):
+            session.commit()
+            return "Subido correctamente."
+
+        session.rollback()
+        raise UnprocessableEntity("Error insertando uno o más archivos.")
+    
+    except DomainError as domErr:
+        raise domErr
+    
+    except Exception as ex:
+        Logger.add_to_log("error", f"Error: {ex}")
+        session.rollback()
+        raise DomainError("Error al procesar los archivos.") 
+    
+    finally:
+        session.close()
+
+
+def inactive_proposal_file_service(user_id: int, proposal_id: int, file_id: int):
+    session = SessionLocal()
+    try:
+        is_valid = verify_proposal_user(session, user_id, proposal_id)
+
+        if not is_valid:
+            raise BadRequest("No puedes realizar esta acción.")
+
+        result = inactivate_proposal_file(session, proposal_id, file_id)
+
+        if not result:
+            session.rollback()
+            raise UnprocessableEntity("No se pudo eliminar el elemento.")
+
+        session.commit()
+        return "Elemento eliminado"
+
+    except DomainError as domErr:
+        raise domErr
+    
+    except Exception as ex:
+        Logger.add_to_log("error", f"Error: {ex}")
+        session.rollback()
+        raise DomainError("Error al procesar los archivos.") 

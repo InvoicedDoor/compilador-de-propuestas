@@ -1,0 +1,53 @@
+.page-index-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #444;
+    width: 100%;
+    height: 60px;
+    padding: 0;
+    margin: 0;
+}
+
+.page-index-bar > ol {
+    width: 100%;
+    display: flex;justify-content: center;
+    border-style: none;
+    font-size: x-large;
+    margin-left: 5px;
+    margin-right: 5px;
+    padding: 0;
+}
+
+.page-index {
+    height: 45px;
+    width: 45px;
+    list-style: none;
+    border-style: none;
+    border-radius: 100%;
+}
+
+.page-index > p {
+    text-align: center;
+}
+
+.right-arrow-image,
+.left-arrow-image {
+    display: inline-block;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    border-style: none;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+
+}
+
+.right-arrow-image {
+    background-image: url("/icons/circle-right-arrow.svg");
+}
+
+.left-arrow-image {
+    background-image: url("/icons/circle-left-arrow.svg");
+}

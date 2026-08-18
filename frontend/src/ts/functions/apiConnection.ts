@@ -1,4 +1,5 @@
 const BACKEND_uRL = "http://localhost:5000";
+// const BACKEND_uRL = "http://localhost";
 
 export const getInfo = async (endpoint: string, token: string) => {
     const res = await fetch(`${BACKEND_uRL}/api/${endpoint}`, {

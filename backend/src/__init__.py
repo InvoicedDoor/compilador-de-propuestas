@@ -1,4 +1,5 @@
 from flask import Flask, jsonify
+from marshmallow import ValidationError
 from flask_cors import CORS
 from src.controllers import auth_controller, proposal_controller, file_types_controller, register_controller
 from src.utilities.handlers.http_exceptions import DomainError
@@ -15,6 +16,14 @@ def handle_domain_error(error):
     return jsonify(
         error.to_dict()
     ), error.status_code
+
+@app.errorhandler(ValidationError)
+def handle_domain_error(error):
+    
+    return jsonify({
+        "message": "Error de validación.",
+        "errors": error.messages
+    }), 422
 
 def init_app(config):
     try:

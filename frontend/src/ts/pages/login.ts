@@ -1,5 +1,5 @@
 import { auth } from "../functions/apiConnection.js";
-import { showToast } from "../components/notifications.js";
+import { showToast } from "../components/modal/notifications.js";
 
 const requestBody: Record<string, string> = {
     mail: "",
@@ -30,18 +30,18 @@ const handleLogin = async (event: any) => {
         const result = await res.json();
 
         if (!res.ok) {
-            // showToast(result.message, "error");
+            showToast(result.message, "error");
             return;
         }
 
 
         localStorage.setItem("token", result.data)
 
-        // // showToast("Bienvenido.")
+        showToast("Bienvenido.");
 
-        // setTimeout(() => {
+        setTimeout(() => {
             window.location.href = "/";
-        // }, 1000);-
+        }, 500);
     } catch (error) {
         showToast("Error de conexión.", "error");
         console.error(error);

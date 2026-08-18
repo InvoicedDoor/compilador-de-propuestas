@@ -7,11 +7,11 @@ load_dotenv()
 
 DATABASE_URL = (
     f"mysql+pymysql://"
-    f"{os.getenv('USER')}:"
-    f"{os.getenv('PASSWORD')}@"
-    f"{os.getenv('HOST')}:"
-    f"{os.getenv('PORT')}/"
-    f"{os.getenv('DATABASE')}"
+    f"{os.getenv('DB_USER')}:"
+    f"{os.getenv('DB_PASS')}@"
+    f"{os.getenv('DB_HOST')}:"
+    f"{os.getenv('DB_PORT')}/"
+    f"{os.getenv('DB_NAME')}"
 )
 
 engine = create_engine(

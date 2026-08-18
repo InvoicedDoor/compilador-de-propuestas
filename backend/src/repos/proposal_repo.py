@@ -2,7 +2,7 @@ from src.utilities.logger.logger import Logger
 from src.models.proposal_model import Proposal, ProposalFiles, ProposalFilter, ProposalUsersModel, ProposalFilesDto
 from src.models.user_model import User
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import select
+from sqlalchemy import select, and_, update
 from pymysql.cursors import DictCursor
 import traceback
 
@@ -70,47 +70,97 @@ def get_all_user_propsal(session: Session, user_id: int, proposal: ProposalFilte
         raise ValueError("Error al obtener la contraseña.")
 
 
-# Función para obtener los archivos de una propuesta.
-def get_propsal_files(session: Session, proposal_id: int):
-    query = """SELECT filename, path FROM proposal_files_table 
-    WHERE proposal_id = %s;"""
-    
-    cursor = None
-    
-    try:
-        query = select(ProposalFiles.filename, ProposalFiles.path).where(proposal_id == proposal_id)
-        result = session.execute(query)
-
-        return result.all()
-    except Exception as ex:
-        Logger.add_to_log('error', traceback.format_exc())
-        raise ValueError("Error al obtener la contraseña.")
-
-
-# # Función para obtener los datos del usuario
-# def get_all_user_propsal(session: Session):
-#     query = "SELECT * FROM ;"
+# # Función para obtener los archivos de una propuesta.
+# def get_propsal_files(session: Session, proposal_id: int):
+#     query = """SELECT filename, path FROM proposal_files_table 
+#     WHERE proposal_id = %s;"""
     
 #     cursor = None
     
 #     try:
-#         pass
+#         query = select(ProposalFiles.filename, ProposalFiles.path).where(proposal_id == proposal_id)
+#         result = session.execute(query)
 
+#         return result.all()
 #     except Exception as ex:
 #         Logger.add_to_log('error', traceback.format_exc())
 #         raise ValueError("Error al obtener la contraseña.")
 
-# Función para obtener una propuesta según su ID.
-def get_propsal_by_id(session: Session, proposal_id):
+
+def get_propsal_by_id(session: Session, proposal_id: int):
     
     try:
-        query = select(Proposal).where(
-            Proposal.id == proposal_id
+        query = (
+            select(Proposal)
+            .options(
+                joinedload(Proposal.proposal_user),
+                joinedload(Proposal.proposal_files)
+            )
+            .where(Proposal.id == proposal_id)
         )
+        
+        result = session.execute(query)
+
+        return result.unique().scalar_one_or_none()
 
     except Exception as ex:
         Logger.add_to_log('error', traceback.format_exc())
         raise ValueError("Error al obtener la contraseña.")
+
+
+def verify_proposal_user(session: Session, user_id: int, proposal_id: int):
+    try:
+        query = (
+            select(ProposalUsersModel)
+            .where(
+                and_(
+                    ProposalUsersModel.proposal_id == proposal_id, 
+                    ProposalUsersModel.user_id == user_id
+                    )
+                )
+        )
+
+        result = session.execute(query)
+
+        return result.unique().scalar_one_or_none()
+    except:
+        Logger.add_to_log('error', traceback.format_exc())
+        raise ValueError("Error al comprobar la propuesta del usuario.")
+    
+
+def get_proposal_users(session: Session, proposal_id: int):
+    try:
+        query = (
+            select(ProposalUsersModel)
+            .join(ProposalUsersModel.users, isouter=True)
+            .join(User.rol, isouter=True)
+            .where(
+                and_(ProposalUsersModel.proposal_id == proposal_id,
+                    ProposalUsersModel.active == 1)))
+
+        result = session.execute(query)
+
+        return result.unique().scalars()
+    except:
+        Logger.add_to_log('error', traceback.format_exc())
+        raise ValueError("Error al comprobar la propuesta del usuario.")
+
+
+def get_proposal_files(session: Session, proposal_id: int):
+    try:
+        query = (
+            select(ProposalFiles)
+            .where(
+                and_(ProposalFiles.proposal_id == proposal_id,
+                    ProposalFiles.active == 1)))
+
+        result = session.execute(query)
+
+        return result.unique().scalars()
+    except:
+        Logger.add_to_log('error', traceback.format_exc())
+        raise ValueError("Error al comprobar la propuesta del usuario.")
+
 
 # Función para agregar una propuesta.
 def send_propsal(session: Session, title: str, description: str):
@@ -161,4 +211,42 @@ def add_relation_user_proposal(session: Session, user_id: int, proposal_id: int)
         return True
     except Exception as ex:
         raise ValueError(f"Error: {ex}")
+
+
+def inactivate_proposal(session: Session, proposal_id: int, file_id: int):
+    try:
+        query = (
+            update(Proposal)
+            .where(
+                and_(Proposal.id == file_id,
+                     Proposal.active == 1)))
+
+        session.execute(query)
+
+        session.flush()
+        
+        return True
+    except:
+        Logger.add_to_log('error', traceback.format_exc())
+        return False
+    
+
+def inactivate_proposal_file(session: Session, proposal_id: int, file_id: int):
+    try:
+        query = (
+            update(ProposalFiles)
+            .where(
+                and_(ProposalFiles.id == file_id,
+                     ProposalFiles.proposal_id == proposal_id,
+                    ProposalFiles.active == 1))
+            .values(active = 0)
+                    )
+
+        session.execute(query)
+
+        session.flush()
+        return True
+    except:
+        Logger.add_to_log('error', traceback.format_exc())
+        return False
 

@@ -20,7 +20,6 @@ from src.utilities.handlers.http_exceptions import *
 from src.utilities.db.db_connection import SessionLocal
 from src.utilities.logger.logger import Logger
 from config import Config
-from flask import jsonify
 from traceback import format_exc
 from jwt import encode
 from datetime import (

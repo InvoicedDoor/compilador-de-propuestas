@@ -1,0 +1,16 @@
+class SocketService:
+
+    def connect(self, client):
+        ...
+
+    def disconnect(self, client):
+        ...
+
+    def emit(self, event: str, payload: dict):
+        ...
+
+    def emit_to(self, client, event: str, payload: dict):
+        ...
+
+    def broadcast(self, event: str, payload: dict):
+        ...

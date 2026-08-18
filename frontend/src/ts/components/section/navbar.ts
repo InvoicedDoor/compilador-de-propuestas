@@ -20,7 +20,7 @@ onmouseleave="leaveHoverUserInformation(event)">
     <div id="modal-space" class="modal-space"></div>
 </div>*/
 
-import { modalComponent } from "./modal.js";
+import { modalComponent } from "../modal/modal.js";
 
 export const navBarComponent = (userName: string): void => {
 

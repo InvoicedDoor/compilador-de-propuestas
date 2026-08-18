@@ -1,5 +1,5 @@
 import { register } from "../functions/apiConnection.js";
-import { showToast } from "../components/notifications.js";
+import { showToast } from "../components/modal/notifications.js";
 
 const requestBody: Record<string, string> = {
   name: "",

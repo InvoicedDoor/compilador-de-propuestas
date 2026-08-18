@@ -1,4 +1,4 @@
-import { cardComponent } from "../components/card.js";
+import { cardComponent } from "../components/element/card.js";
 import { getInfo } from "../functions/apiConnection.js";
 import { verifyAuth } from "../functions/verifyAuth.js";
 
@@ -38,7 +38,7 @@ interface ApiResponse<T> {
 }
 
 function getProposalInfo(cardId: number) {
-    window.location.href = "/project/" + cardId;
+    window.location.href = "/html/project.html?id=" + cardId;
 }
 
 /* ===================== DATA ===================== */
