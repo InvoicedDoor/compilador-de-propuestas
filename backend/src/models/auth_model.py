@@ -26,7 +26,7 @@ class Auth(Base):
         String(255)
     )
 
-    is_active: Mapped[bool] = mapped_column(
+    active: Mapped[bool] = mapped_column(
         Boolean,
         default=True
     )
@@ -42,7 +42,7 @@ class GetAuth(BaseModel):
     user_id: int = Field(...)
     mail: str = Field(...)
     password: str = Field(...)
-    is_active: bool = Field(...)
+    active: bool = Field(...)
 
 class RegisterCredentials(BaseModel):
     mail: str = Field(...)

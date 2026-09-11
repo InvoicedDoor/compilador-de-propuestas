@@ -2,47 +2,115 @@ import traceback, os, logging
 from dotenv import load_dotenv
 
 load_dotenv()
-defaul_logger_directory = os.getenv("DEFAULT_LOGGER_DIRECTORY")
-defaul_logger_filename = os.getenv("DEFAULT_LOGGER_FILENAME")
+default_logger_directory = os.getenv("DEFAULT_LOGGER_DIRECTORY")
+default_logger_filename = os.getenv("DEFAULT_LOGGER_FILENAME")
 
-class Logger():
+events_logger_directory = os.getenv("EVENTS_LOGGER_DIRECTORY")
+events_logger_filename = os.getenv("EVENTS_LOGGER_FILENAME")
 
-    def __set_logger(self):
-        log_directory = defaul_logger_directory
-        log_filename = defaul_logger_filename
+import logging
+import os
 
-        logger = logging.getLogger(__name__)
+from dotenv import load_dotenv
+
+load_dotenv()
+
+
+class Logger:
+
+    @staticmethod
+    def __set_logger(
+        directory: str,
+        filename: str,
+        logger_name: str
+    ) -> logging.Logger:
+
+        os.makedirs(directory, exist_ok=True)
+
+        logger = logging.getLogger(logger_name)
         logger.setLevel(logging.DEBUG)
 
-        log_path = os.path.join(log_directory, log_filename)
+        log_path = os.path.join(
+            directory,
+            filename
+        )
 
-        file_handler = logging.FileHandler(log_path, encoding='utf-8')
-        file_handler.setLevel(logging.DEBUG)
+        # Evitar agregar handlers repetidos
+        if not logger.handlers:
 
-        formatter = logging.Formatter('%(asctime)s | %(levelname)s | %(message)s', "%Y-%m-%d %H:%M:%S")
-        file_handler.setFormatter(formatter)
+            file_handler = logging.FileHandler(
+                log_path,
+                encoding="utf-8"
+            )
 
-        if (logger.hasHandlers()):
-            logger.handlers.clear()
+            file_handler.setLevel(logging.DEBUG)
 
-        logger.addHandler(file_handler)
+            formatter = logging.Formatter(
+                "%(asctime)s | %(levelname)s | %(message)s",
+                "%Y-%m-%d %H:%M:%S"
+            )
+
+            file_handler.setFormatter(formatter)
+
+            logger.addHandler(file_handler)
 
         return logger
     
     @classmethod
-    def add_to_log(cls, level, message):
-        try:
-            logger = cls.__set_logger(cls)
+    def add_to_system_log(cls, level, message):
 
-            if (level == "critical"):
-                logger.critical(message)
-            elif (level == "debug"):
-                logger.debug(message)
-            elif (level == "error"):
-                logger.error(message)
-            elif (level == "info"):
-                logger.info()
-            elif (level == "warn"):
-                logger.warning(message)
-        except:
-            traceback.format_exc()
+        logger = cls.__set_logger(
+            os.getenv("DEFAULT_LOGGER_DIRECTORY"),
+            os.getenv("DEFAULT_LOGGER_FILENAME"),
+            "system_logger"
+        )
+
+        logger.log(
+            cls.__get_level(level),
+            message
+        )
+
+    @classmethod
+    def add_to_test_log(cls, level, message):
+
+        logger = cls.__set_logger(
+            os.getenv("TEST_LOGGER_DIRECTORY"),
+            os.getenv("TEST_LOGGER_FILENAME"),
+            "test_logger"
+        )
+
+        logger.log(
+            cls.__get_level(level),
+            message
+        )
+
+    @classmethod
+    def add_to_events_log(cls, level, message):
+
+        logger = cls.__set_logger(
+            os.getenv("EVENTS_LOGGER_DIRECTORY"),
+            os.getenv("EVENTS_LOGGER_FILENAME"),
+            "events_logger"
+        )
+
+        logger.log(
+            cls.__get_level(level),
+            message
+        )
+
+    @staticmethod
+    def __get_level(level):
+
+        levels = {
+            "debug": logging.DEBUG,
+            "info": logging.INFO,
+            "warn": logging.WARNING,
+            "warning": logging.WARNING,
+            "error": logging.ERROR,
+            "critical": logging.CRITICAL,
+        }
+
+        return levels.get(
+            level.lower(),
+            logging.INFO
+        )

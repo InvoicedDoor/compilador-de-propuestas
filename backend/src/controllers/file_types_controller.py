@@ -21,5 +21,5 @@ def get_all_file_tipes_route():
         return domErr.to_dict()
 
     except Exception as ex:
-        Logger.add_to_log('error', traceback.format_exc())
+        Logger.add_to_system_log('error', traceback.format_exc())
         raise InternalServerError('Error')

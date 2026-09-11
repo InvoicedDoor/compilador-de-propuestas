@@ -1,4 +1,4 @@
-from ..services.auth_service import auth_service, change_password_service
+from ..services.auth_service import auth_service, change_password_service, get_user_by_id_service
 from src.utilities.middlewares.veryfy_authentication import verify_authentication
 from flask import Blueprint, request
 from src.utilities.logger.logger import Logger
@@ -12,7 +12,9 @@ main = Blueprint('auth_blueprint', __name__)
 @main.get('')
 @verify_authentication
 def verify_auth():
-    return OK("Authorized").to_response()
+    user_info = get_user_by_id_service(request.user["id"])
+
+    return OK("Authorized", user_info).to_response()
 
 
 @main.post('')
@@ -20,16 +22,34 @@ def auth_route():
     try:
         mail = request.json['mail']
         password = request.json['password']
-        res_service = auth_service(mail, password)
+        payload, user_info = auth_service(mail, password)
 
-        return OK(data=res_service).to_response()
+        return OK(data={"payload": payload, "user": user_info}).to_response()
     
     except DomainError as domErr:
         return domErr.to_dict()
     
     except Exception as ex:
-        Logger.add_to_log('error', traceback.format_exc())
+        Logger.add_to_system_log('error', traceback.format_exc())
         raise InternalServerError('Error')
+
+
+# @main.post('')
+# @verify_authentication
+# def unauthorize_token_controller():
+#     try:
+#         mail = request.json['mail']
+#         password = request.json['password']
+#         payload, user_info = auth_service(mail, password)
+
+#         return OK(data={"payload": payload, "user": user_info}).to_response()
+    
+#     except DomainError as domErr:
+#         return domErr.to_dict()
+    
+#     except Exception as ex:
+#         Logger.add_to_system_log('error', traceback.format_exc())
+#         raise InternalServerError('Error')
 
 
 @main.post("/change-password")
@@ -48,6 +68,6 @@ def change_password_route():
         return domErr.to_dict()
 
     except Exception as ex:
-        Logger.add_to_log('error', traceback.format_exc())
+        Logger.add_to_system_log('error', traceback.format_exc())
         raise InternalServerError('Error')
     

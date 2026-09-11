@@ -28,12 +28,12 @@ def get_file_tipes_service():
             for file in file_types
         ]
     
-    except DomainError as domErr:
-        raise domErr
+    except DomainError:
+        raise
 
     except:
 
-        Logger.add_to_log(
+        Logger.add_to_system_log(
             'error',
             format_exc()
         )

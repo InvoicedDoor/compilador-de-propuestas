@@ -1,7 +1,13 @@
 from flask import Flask, jsonify
 from marshmallow import ValidationError
 from flask_cors import CORS
-from src.controllers import auth_controller, proposal_controller, file_types_controller, register_controller
+from src.controllers import (
+    user_controller,
+    auth_controller, 
+    project_controller, 
+    register_controller,
+    file_types_controller, 
+    )
 from src.utilities.handlers.http_exceptions import DomainError
 
 app = Flask(__name__)
@@ -29,9 +35,10 @@ def init_app(config):
     try:
         app.config.from_object(config)
         app.register_blueprint(auth_controller.main, url_prefix='/api/auth')
-        app.register_blueprint(proposal_controller.main, url_prefix='/api/proposal')
-        app.register_blueprint(file_types_controller.main, url_prefix='/api/file-tipes')
         app.register_blueprint(register_controller.main, url_prefix='/api/register')
+        app.register_blueprint(user_controller.main, url_prefix='/api/users')
+        app.register_blueprint(project_controller.main, url_prefix='/api/project')
+        app.register_blueprint(file_types_controller.main, url_prefix='/api/file-tipes')
 
         return app
     except Exception as ex:

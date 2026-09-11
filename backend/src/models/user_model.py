@@ -17,31 +17,46 @@ class User(Base):
 
     second_lastname: Mapped[str] = mapped_column(String(40))
     
-    rol_id: Mapped[int] = mapped_column(ForeignKey("roles_table.id"), default=2)
+    rol_id: Mapped[int] = mapped_column(ForeignKey("company_roles_table.id"), default=2)
 
-    rol: Mapped["Rol"] = relationship(
+    active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+
+    rol: Mapped["Rol"] = relationship( # pyright: ignore[reportUndefinedVariable]
         "Rol",
         back_populates="users",
         lazy="joined"
     )
 
-    credentials: Mapped["Auth"] = relationship(
+    credentials: Mapped["Auth"] = relationship( # pyright: ignore[reportUndefinedVariable]
         "Auth",
         back_populates="user",
         lazy="joined",
         uselist=False
     )
 
-    user_proposal: Mapped[list["ProposalUsersModel"]] = relationship(
-        "ProposalUsersModel",
+    user_project: Mapped[list["ProjectUsersModel"]] = relationship( # pyright: ignore[reportUndefinedVariable]
+        "ProjectUsersModel",
         back_populates="users",
         lazy="joined"
     )
 
-class RowUser(BaseModel):
+    user_event: Mapped["ProjectEventModel"] = relationship( # pyright: ignore[reportUndefinedVariable]
+        back_populates="user",
+        lazy="joined"
+    )
+
+class RequesterUser(BaseModel):
     id: int = Field(None)
     mail: str = Field(None)
     rol: int = Field(None)
+
+class UserFilter(BaseModel):
+    id: int = Field(None)
+    name: str = Field(None)
+    first_lastname: str = Field(None)
+    second_lastname: str = Field(None)
+    rol_id: int = Field(None)
+    active: bool = Field(None)
 
 class RegisterUser(BaseModel):
     name: str = Field(...)

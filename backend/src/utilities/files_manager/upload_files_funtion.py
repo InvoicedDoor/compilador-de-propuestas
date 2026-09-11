@@ -1,8 +1,7 @@
 from src.utilities.middlewares.verify_files import verify_extension, verify_mime, clean_name, create_secure_name
-from src.models.proposal_model import ProposalFilesDto
+from src.dtos.project_dto import ProjectFilesDto
 from src.dtos.file_type_dto import MimeTypeDto
 from src.repos.file_type_repo import get_file_type_by_filter
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from src.utilities.files_manager.files_manager import process_file, write_files_function
 from src.utilities.handlers.http_exceptions import *
 from src.utilities.logger.logger import Logger
@@ -14,7 +13,7 @@ load_dotenv()
 
 documentation_path = getenv("SAVE_FILES_PATH")
 
-def upload_files(session: Session = None, proposal_files: list = [], proposal_id: int = 0):
+def upload_files(session: Session = None, proposal_files: list = [], project_id: int = 0):
     try:
         write_files_results = []
         proposal_files_dto = []
@@ -35,12 +34,19 @@ def upload_files(session: Session = None, proposal_files: list = [], proposal_id
             filename = clean_name(file)
             secure_name = create_secure_name(filename)
 
+            print(secure_name)
+
             if len(filename) > 50:
                 write_files_results.append({"status": False,"filename": filename})
                 write_files_results.append(False)
                 continue
 
-            proposal_file: ProposalFilesDto = ProposalFilesDto(proposal_id=proposal_id, filename=filename, path = f"{documentation_path}/{filename}", file_type_id=file_type.id)
+            proposal_file: ProjectFilesDto = ProjectFilesDto(
+                project_id=project_id, 
+                filename=filename, 
+                path = f"{documentation_path}/{secure_name}", 
+                code=secure_name, 
+                file_type_id=file_type.id)
 
             future = process_file(session, proposal_file)
 
@@ -61,8 +67,9 @@ def upload_files(session: Session = None, proposal_files: list = [], proposal_id
         return write_files_results
 
     except DomainError as domErr:
+        Logger.add_to_system_log("error", domErr)
         raise domErr
     
     except Exception as e:
-        Logger.add_to_log("error", f"Error: {e}")
+        Logger.add_to_system_log("error", f"Error: {e}")
         raise DomainError("Error al procesar los archivos.") 

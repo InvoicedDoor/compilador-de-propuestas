@@ -20,7 +20,7 @@ def get_file_tipes_repo(session: Session):
 
     except:
 
-        Logger.add_to_log(
+        Logger.add_to_system_log(
             'error',
             traceback.format_exc()
         )
@@ -43,7 +43,7 @@ def get_file_type_by_filter(session: Session, file_type: MimeTypeDto):
 
     except:
 
-        Logger.add_to_log(
+        Logger.add_to_system_log(
             'error',
             traceback.format_exc()
         )

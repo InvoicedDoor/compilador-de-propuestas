@@ -32,7 +32,7 @@ def verify_authentication(func):
         except jwt.InvalidTokenError:
             return jsonify({"message": "Token inválido"}), 401
         except Exception:
-            Logger.add_to_log("error", format_exc())
+            Logger.add_to_system_log("error", format_exc())
             return jsonify({"message": "Authentication error"}), 401
 
         return func(*args, **kwargs)

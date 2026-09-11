@@ -4,7 +4,11 @@ show_routes.py
 create_db.py
 
 # Carpetas
+.vscode/
 venv/
 __pycache__/
 files/
 logs/
+
+# Configuraciones de proyecto
+*.json
