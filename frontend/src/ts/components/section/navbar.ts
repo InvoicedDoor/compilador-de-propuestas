@@ -1,25 +1,3 @@
-/*<div class="app-main-image-container">
-    <img class="app-main-logo" src="/icons/proposal-manager.png" alt="" onclick="window.location.href='/'">
-</div>
-<div class="navbar-options">
-    <img class="icon-option" src="/icons/table-solid.svg" alt="Redirección a la tabla de propuestas">
-    <img class="icon-option" src="/icons/table-solid.svg" alt="Redirección a agregar propuesta">
-</div>
-<div class="user-wrapper"
-onmouseenter="hoverUserInformation(event)"
-onmouseleave="leaveHoverUserInformation(event)">
-    <div class="user-identification">
-        <div class="user-image">
-            <img src="/icons/user-solid.svg" alt="">
-        </div>
-        <div class="user-name">
-            <h4>Bienvenido: <p>Dónovan Hernández</p>
-            </h4>
-        </div>
-    </div>
-    <div id="modal-space" class="modal-space"></div>
-</div>*/
-
 import { modalComponent } from "../modal/modal.js";
 
 export const navBarComponent = (userName: string): void => {
@@ -39,10 +17,9 @@ export const navBarComponent = (userName: string): void => {
 
     const imageLogo = document.createElement("img");
     imageLogo.className = "app-main-logo";
-    imageLogo.src = "/icons/proposal-manager.png";
+    imageLogo.src = "/icons/project-manager.png";
     imageLogo.alt = "Application Logo";
     imageLogo.onclick = () => window.location.href = '/';
-
     mainLogo.appendChild(imageLogo);
 
     /* ===================== OPTIONS ===================== */
@@ -50,20 +27,20 @@ export const navBarComponent = (userName: string): void => {
     const navbarOptions = document.createElement("div");
     navbarOptions.className = "navbar-options";
 
-    const proposalTableOption = document.createElement("img");
-    proposalTableOption.className = "icon-option";
-    proposalTableOption.src = "/icons/table.svg";
-    proposalTableOption.alt = "Tabla de propuestas";
-    proposalTableOption.onclick = () => window.location.href = '/';
+    const projectTableOption = document.createElement("img");
+    projectTableOption.className = "icon-option";
+    projectTableOption.src = "/icons/table.svg";
+    projectTableOption.alt = "Tabla de propuestas";
+    projectTableOption.onclick = () => window.location.href = '/';
 
-    const addProposalOption = document.createElement("img");
-    addProposalOption.className = "icon-option";
-    addProposalOption.src = "/icons/plus.svg";
-    addProposalOption.alt = "Agregar propuesta";
-    addProposalOption.onclick = () => window.location.href = '/html/add-proposal.html';
+    const addProjectOption = document.createElement("img");
+    addProjectOption.className = "icon-option";
+    addProjectOption.src = "/icons/plus.svg";
+    addProjectOption.alt = "Agregar propuesta";
+    addProjectOption.onclick = () => window.location.href = '/html/add-project.html';
 
-    navbarOptions.appendChild(proposalTableOption);
-    navbarOptions.appendChild(addProposalOption);
+    navbarOptions.appendChild(projectTableOption);
+    navbarOptions.appendChild(addProjectOption);
 
     /* ===================== USER ===================== */
 

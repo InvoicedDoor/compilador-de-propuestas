@@ -30,8 +30,8 @@ const previewUrls: Preview[] = [];
 
 const imagesContainer = document.getElementById("show_files_container") as HTMLElement;
 
-let proposalTitle: string = "";
-let proposalDescription: string = "";
+let projectTitle: string = "";
+let projectDescription: string = "";
 let temporalId: number = 1;
 
 /* ===================== FILES ===================== */
@@ -182,29 +182,29 @@ const handleFileUpload = (event: Event): void => {
 };
 
 const handleInputTitle = (event: Event): void => {
-    proposalTitle = (event.target as HTMLInputElement).value;
+    projectTitle = (event.target as HTMLInputElement).value;
 };
 
 const handleInputDescription = (event: Event): void => {
-    proposalDescription = (event.target as HTMLInputElement).value;
+    projectDescription = (event.target as HTMLInputElement).value;
 };
 
 /* ===================== SUBMIT ===================== */
 
-const handleSendProposal = async (event: Event): Promise<void> => {
+const handleSendProject = async (event: Event): Promise<void> => {
     event.preventDefault();
 
     try {
         const body = new FormData();
 
-        body.append("proposal_title", proposalTitle);
-        body.append("proposal_description", proposalDescription);
+        body.append("project_title", projectTitle);
+        body.append("project_description", projectDescription);
 
         selectedFiles.forEach(file => {
-            body.append("proposal_documentation", file);
+            body.append("project_documentation", file);
         });
 
-        const res = await uploadInfo("proposal", token, body);
+        const res = await uploadInfo("project", token, body);
         const result = await res.json();
 
         if (!res.ok) {
@@ -220,9 +220,11 @@ const handleSendProposal = async (event: Event): Promise<void> => {
 
         imagesContainer.classList.replace("show-files", "no-show-files");
 
-        proposalTitle = "";
-        proposalDescription = "";
+        projectTitle = "";
+        projectDescription = "";
         temporalId = 1;
+
+        location.href = "/";
 
     } catch (error) {
         showToast("Error inesperado.", "error");
@@ -234,7 +236,7 @@ const handleSendProposal = async (event: Event): Promise<void> => {
 
 declare global {
     interface Window {
-        handleSendProposal: (event: Event) => void;
+        handleSendProject: (event: Event) => void;
         handleInputTitle: (event: Event) => void;
         handleInputDescription: (event: Event) => void;
         handleFileUpload: (event: Event) => void;
@@ -244,7 +246,7 @@ declare global {
     }
 }
 
-window.handleSendProposal = handleSendProposal;
+window.handleSendProject = handleSendProject;
 window.handleInputTitle = handleInputTitle;
 window.handleInputDescription = handleInputDescription;
 window.handleFileUpload = handleFileUpload;

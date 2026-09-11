@@ -4,10 +4,10 @@
     </div>
     <div class="project-data">
         <div class="project-title">
-            <h3 id="proposal-title">Titulo del proyecto</h3>
+            <h3 id="project-title">Titulo del proyecto</h3>
         </div>
         <div class="project-description">
-            <p id="proposal-description">Proyecto de renovación de conceptos.</p>
+            <p id="project-description">Proyecto de renovación de conceptos.</p>
         </div>
     </div>
     <div class="card-footer">
@@ -16,10 +16,10 @@
     </div>
 </div>*/
 
-export const cardComponent = (titleContent: string, descriptionContent: string, imageSrc: string, onclick: () => void) => {
+export const cardComponent = (projectId: number, titleContent: string, descriptionContent: string, imageSrc: string, onclickEdit: () => void, onclickDelete: () => void) => {
     const cardContainer = document.createElement("div");
     cardContainer.className = "card";
-    cardContainer.onclick = onclick;
+    cardContainer.id = `card-project-${projectId}`;
 
     const cardImageContainer = document.createElement("div");
     cardImageContainer.className = "image-container";
@@ -46,9 +46,11 @@ export const cardComponent = (titleContent: string, descriptionContent: string, 
     const buttonEdit = document.createElement("div");
     buttonEdit.className = "edit-card-button";
     buttonEdit.textContent = "Editar";
+    buttonEdit.onclick = () => onclickEdit()
     const buttonDelete = document.createElement("div");
     buttonDelete.className = "delete-card-button";
     buttonDelete.textContent = "Borrar";
+    buttonDelete.onclick = () => onclickDelete()
     cardFooter.appendChild(buttonEdit);
     cardFooter.appendChild(buttonDelete);
 

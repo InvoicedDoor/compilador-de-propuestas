@@ -35,17 +35,17 @@
                         <table class="user-members">
                             <thead>
                                 <tr>
-                                    <th>Id</th>
-                                    <th>Nombre de Usuario</th>
-                                    <th>Rol</th>
-                                    <th>Acciones</th>
+                                    <th class="content-justify">Nombre de Usuario</th>
+                                    <th class="content-center">Position</th>
+                                    <th class="content-center">Rol</th>
+                                    <th class="content-center">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody id="user-members-body" class="table-body"></tbody>
                         </table>
                     </div>
                     <div class="end-space">
-                        <button class="add-element-button user-members" onclick="openModal()">Agregar</button>
+                        <button class="add-element-button user-members" onclick="openModal('addColaborators')">Agregar</button>
                     </div>
                 </div>
             </div>
@@ -53,10 +53,11 @@
                 <div class="actions-header">
                     <h3>Archvios</h3>
                 </div>
-                <ul id="file-list-element" class="files-list"></ul>
+                <div id="file-list-element">
+                </div>
                 <div id="file-pagination" class="page-index-bar">
                 </div>
-                <button onclick="openModal()" class="add-element-button">Agregar</button>
+                <button onclick="openModal('addFiles')" class="add-element-button">Agregar</button>
             </div>
         </div>
     </div>
@@ -66,7 +67,7 @@
                 <img class="action-close-icon-short" alt="" onclick="closeModal()">
             </div>
             <div id="modal-body" class="modal-body">
-                <div class="upload-files-container">
+                <!-- <div class="upload-files-container">
                     <div class="files-container-full-screen no-show-files" id="show_files_container"></div>
                     <div class="input-container-full-screen">
                         <h3>Documentos complementarios</h3>
@@ -78,10 +79,10 @@
                             </div>
                         </div>
                     </div>
-                </div>
+                </div> -->
             </div>
             <div class="input-container-full-screen">
-                <button class="upload-button" onclick="handleUploadFiles(event)">Subir archivos</button>
+                <button id="send-request-button" class="upload-button" onclick="handleUploadFiles(event)"></button>
             </div>
         </div>
     </div>
@@ -94,19 +95,18 @@
         overlay.style.display = "none";
     }
 
-    function openModal() {
-        const overlay = document.getElementById("modal-overlay");
-        overlay.style.display = "flex";
-    }
 </script>
 <script type="module" src="/dist/js/functions/apiConnection.js"></script>
-<script type="module" src="/dist/js/components/modal.js"></script>
+<script type="module" src="/dist/js/components/modal/modal.js"></script>
 <script type="module" src="/dist/js/pages/project.js"></script>
 <script src="/dist/js/components/toastify.js"></script>
 <script type="module">
-    import { navBarComponent } from "/dist/js/components/navbar.js";
+    import { navBarComponent } from "/dist/js/components/section/navbar.js";
+    import { userStore } from "/dist/js/functions/userStorage.js";
+    import { bodyAddFilesModal } from "/dist/js/components/modal/bodyModalAddFiles.js";
+    import { bodyAddCollaboratorsModal } from "/dist/js/components/modal/bodyModalAddCollaborators.js";
 
-    navBarComponent("Dónovan Hernández");
+    navBarComponent(userStore.name);
 
     const userContainer = document.querySelector(".user-identification");
 
@@ -114,4 +114,17 @@
         const modal = userContainer.querySelector(".modal-space");
         if (modal) modal.remove();
     });
+
+    function openModal(modal) {
+        if (modal === "addFiles")
+            bodyAddFilesModal();
+        else if (modal === "addColaborators")
+            bodyAddCollaboratorsModal()
+        else
+            return;
+        const overlay = document.getElementById("modal-overlay");
+        overlay.style.display = "flex";
+    }
+
+    window.openModal = openModal
 </script>

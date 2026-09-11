@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="/css/add-proposal.css">
+    <link rel="stylesheet" href="/css/add-project.css">
     <link rel="stylesheet" href="/css/add-files-style.css">
     <link rel="stylesheet" href="/css/general-style.css">
     <link rel="stylesheet" href="/css/navbar.css">
@@ -42,7 +42,7 @@
             </div>
         </div>
         <div class="input-container">
-            <button class="upload-button" onclick="handleSendProposal(event)">Subir propuesta</button>
+            <button class="upload-button" onclick="handleSendProject(event)">Subir propuesta</button>
         </div>
     </div>
 </body>
@@ -59,14 +59,15 @@
 
 </html>
 
-<script type="module" src="/dist/js/pages/add-proposal.js"></script>
+<script type="module" src="/dist/js/pages/addProject.js"></script>
 <script type="module" src="/dist/js/functions/apiConnection.js"></script>
-<script type="module" src="/dist/js/components/modal.js"></script>
+<script type="module" src="/dist/js/components/modal/modal.js"></script>
 <script src="/dist/js/components/toastify.js"></script>
 <script type="module">
-    import { navBarComponent } from "/dist/js/components/navbar.js";
+    import { navBarComponent } from "/dist/js/components/section/navbar.js";
+    import { userStore } from "/dist/js/functions/userStorage.js";
 
-    navBarComponent("Dónovan Hernández");
+    navBarComponent(userStore.name);
 
     const userContainer = document.querySelector(".user-identification");
 

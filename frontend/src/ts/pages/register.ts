@@ -19,7 +19,7 @@ const handleInput = (event: Event) => {
         requestBody[target.id] = target.value;
     } catch (e)
     {
-        console.log("Error al ingresar los valores");
+        showToast("Error al registrar al usuario. Consulte al administrador de la aplicación.", "warning");
     }
 }
 

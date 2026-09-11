@@ -115,6 +115,12 @@ span {
     vertical-align: middle;
 }
 
+.content-justify {
+    text-align: justify;
+    vertical-align: middle;
+    padding: 5px;
+}
+
 .action-content,
 .content-image {
     display: flex;

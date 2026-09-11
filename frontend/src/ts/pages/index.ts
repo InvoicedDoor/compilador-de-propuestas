@@ -37,13 +37,13 @@ interface ApiResponse<T> {
     message: string
 }
 
-function getProposalInfo(cardId: number) {
+function getProjectInfo(cardId: number) {
     window.location.href = "/html/project.html?id=" + cardId;
 }
 
 /* ===================== DATA ===================== */
 (async () => {
-    const response: Response = await getInfo("proposal", token);
+    const response: Response = await getInfo("project", token);
     const dataJson: ApiResponse<CardData[]> = await response.json();
 
     // Limpia el contenedor
@@ -63,10 +63,12 @@ function getProposalInfo(cardId: number) {
 
     cards.forEach((card: CardData) => {
         const cardElement = cardComponent(
+            card.id,
             card.title,
             card.description,
             card.source.source,
-            () => getProposalInfo(card.id)
+            () => getProjectInfo(card.id),
+            () => {}
         );
 
         cardsContainer.appendChild(cardElement);

@@ -1,14 +1,14 @@
 
-import { proposalFileRow } from "../components/element/proposalFileRow.js";
+import { projectFileRow } from "../components/element/projectFileRow.js";
 import { userMemberRow } from "../components/element/userMemberRow.js";
-import { getInfo, uploadInfo } from "../functions/apiConnection.js";
+import { getInfo, uploadInfo, deleteInfo } from "../functions/apiConnection.js";
 import { verifyAuth } from "../functions/verifyAuth.js";
 import { createFileOption } from "../components/element/fileTypeButton.js";
 import { FileInterface, Metadata, Preview } from "../interfaces/file.interface.js";
 import { UserMemberInterface } from "../interfaces/userMember.interface.js";
 import FileTypeModel from "../models/fileType.model.js";
 import { showToast } from "../components/modal/notifications.js";
-import { pageIndexList } from "../components/element/page-index-list.js";
+import { pageIndexList, validatePaginationToHiddeArrows } from "../components/element/pageIndexList.js";
 
 /* ===================== AUTH ===================== */
 
@@ -25,27 +25,31 @@ let fileTypes: FileTypeModel[] = [];
 
 const params = new URLSearchParams(window.location.search);
 const projectId: number = Number(params.get("id")) || 0;
-let proposalInfo: any = null;
+let projectInfo: any = null;
 let membersInfo: any = [];
 let filesInfo: Array<FileInterface> = [];
-const proposalTitleElement = document.getElementById("project-title");
-const proposalDescriptionElement = document.getElementById("project-description");
-const proposalFiles = document.getElementById("file-list-element");
+const projectTitleElement = document.getElementById("project-title");
+const projectDescriptionElement = document.getElementById("project-description");
+const projectFiles = document.getElementById("file-list-element");
 
 const selectedFiles: File[] = [];
 const metadatos: Metadata[] = [];
 const previewUrls: Preview[] = [];
 
 
-const imagesContainer = document.getElementById("show_files_container") as HTMLElement;
-let proposalTitle: string = "";
-let proposalDescription: string = "";
+let projectTitle: string = "";
+let projectDescription: string = "";
+const FILES_PER_PAGE = 5;
+const VISIBLE_PAGES = 4;
 let temporalId: number = 1;
 let filePage = 1;
 let totalPages = 1;
+let firstPage = 1;
+let finalPage = 5;
 
 /* ===================== RENDER ===================== */
 const processFiles = (files: FileList): void => {
+    const imagesContainer = document.getElementById("show_files_container") as HTMLElement;
 
     for (let i = 0; i < files.length; i++) {
         let isAllowed = false
@@ -94,21 +98,51 @@ const processFiles = (files: FileList): void => {
     imagesContainer.classList.replace("no-show-files", "show-files");
 };
 
-const chargeFileList = (startCount: number, endCount: number) => {
+const cleanFilesFromContainer = () => {
+    if (!projectFiles)
+        return;
+    projectFiles.innerHTML = "";
+}
+
+const chargeFileList = async (startCount: number, endCount: number) => {
+    await getFiles();
+
+    if (filesInfo.length === 0)
+    {
+        const noInfoContainer = document.createElement("div");
+        noInfoContainer.className = "files-list";
+        const noInfo = document.createElement("h3");
+        noInfo.textContent = "No hay archivos para mostrar."
+        noInfoContainer.appendChild(noInfo);
+        return noInfoContainer;
+    }
+        
+    const orederedList = document.createElement("ol");
+    orederedList.className = "files-list";
+    
     for (let pageCount = startCount; pageCount < endCount; pageCount++)
     {
         if (pageCount > endCount || pageCount >= filesInfo.length)
         {
-            return;
+            break;
         }
 
-        let rowFile = proposalFileRow(filesInfo[pageCount]);
+        let rowFile = projectFileRow(projectId, filesInfo[pageCount], handleDeleteFile);
 
-        proposalFiles?.appendChild(rowFile);
+        orederedList.appendChild(rowFile);
     }
+
+    return orederedList;
+}
+
+const getFiles = async () => {
+    const projectFilesRow = await getInfo(`project/project-files/${projectId}`, token);
+    const filesJson = await projectFilesRow.json();
+    filesInfo = filesJson["data"];
 }
 
 const loadFilesOnContainer = (): void => {
+    const imagesContainer = document.getElementById("show_files_container") as HTMLElement;
     imagesContainer.innerHTML = "";
 
     for (let count = 0; count < previewUrls.length; count++) {
@@ -175,17 +209,17 @@ const loadFilesOnContainer = (): void => {
 
 /* ===================== EVENTS ===================== */
 
-const handleDragOver = (event: DragEvent): void => {
+export const handleDragOver = (event: DragEvent): void => {
     event.preventDefault();
     (event.currentTarget as HTMLElement).classList.add("dragover");
 };
 
-const handleDragLeave = (event: DragEvent): void => {
+export const handleDragLeave = (event: DragEvent): void => {
     event.preventDefault();
     (event.currentTarget as HTMLElement).classList.remove("dragover");
 };
 
-const handleDrop = (event: DragEvent): void => {
+export const handleDrop = (event: DragEvent): void => {
     event.preventDefault();
     (event.currentTarget as HTMLElement).classList.remove("dragover");
 
@@ -194,7 +228,7 @@ const handleDrop = (event: DragEvent): void => {
     }
 };
 
-const handleFileUpload = (event: Event): void => {
+export const handleFileUpload = (event: Event): void => {
     const target = event.target as HTMLInputElement;
     if (target.files?.length) {
         processFiles(target.files);
@@ -202,30 +236,146 @@ const handleFileUpload = (event: Event): void => {
 };
 
 const handleInputTitle = (event: Event): void => {
-    proposalTitle = (event.target as HTMLInputElement).value;
+    projectTitle = (event.target as HTMLInputElement).value;
 };
 
 const handleInputDescription = (event: Event): void => {
-    proposalDescription = (event.target as HTMLInputElement).value;
+    projectDescription = (event.target as HTMLInputElement).value;
 };
 
 const changeFilePage = (page: number) => {
     filePage = page;
 }
 
-const handleChangePageIndex = (indexPage: number) => {
-    if (!proposalFiles)
+const handleChangePageIndex = async (indexPage: number) => {
+
+    if (!projectFiles)
         return;
 
-    proposalFiles.innerHTML = "";
+    if (indexPage < 1 || indexPage > totalPages)
+        return;
+
     filePage = indexPage;
     
-    if (filePage === indexPage)
-    {
-        let startCount = 5 * filePage;
-        let endCount = (filePage + 1) * 5;
-        chargeFileList(startCount, endCount);
+    // Donde empieza el array de elementos
+    const startCount =
+    FILES_PER_PAGE * (filePage - 1);
+    
+    // Donde termina el array de elementos
+    const endCount =
+        filePage * FILES_PER_PAGE;
+
+    const orderedList =
+        await chargeFileList(
+            startCount,
+            endCount
+        );
+
+    if (!orderedList)
+        return;
+
+    projectFiles.innerHTML = "";
+    projectFiles.appendChild(orderedList);
+
+    finalPage = Math.min(
+        firstPage + VISIBLE_PAGES,
+        totalPages
+    );
+
+    pageIndexList(
+        "file-pagination",
+        firstPage,
+        finalPage,
+        filePage,
+        endCount,
+        handleChangePageIndex,
+        handleChangeLeftIndex,
+        handleChangeRightIndex
+    );
+
+    validatePaginationToHiddeArrows(
+        filePage,
+        totalPages
+    );
+};
+
+const handleChangeRightIndex = async () => {
+
+    if (filePage > totalPages)
+        return;
+
+    filePage++;
+
+    // Solo mover la ventana cuando
+    // salimos de ella por la derecha
+    if ((firstPage + VISIBLE_PAGES) < totalPages)
+        firstPage++;
+    
+    await handleChangePageIndex(filePage);
+};
+
+const handleChangeLeftIndex = async () => {
+    if (filePage < 1)
+        return;
+    
+    filePage--;
+    
+    // Solo mover la ventana cuando
+    // salimos de ella por la izquierda
+    if (firstPage > 1) {
+        firstPage--;
     }
+    
+    await handleChangePageIndex(filePage);
+};
+
+const handleDeleteFile = async (projectId: number, fileId: number) => {
+    const queryStringArgs = [
+        {
+            key: "project", 
+            value: projectId
+        }, 
+        {
+            key: "file", 
+            value: fileId
+        }
+    ]
+    const res = await deleteInfo("project/project-files", token, null, queryStringArgs)
+
+    const resJson = await res.json()
+    if (!res.ok)
+    {
+        showToast(resJson.message, "warning");
+        return;
+    }
+    showToast(resJson.message, "success");
+    
+    await getFiles();
+    
+    totalPages = Math.ceil(filesInfo.length / FILES_PER_PAGE);
+
+    if (filePage < 1)
+        return;
+    
+    
+    // Solo mover la ventana cuando
+    // salimos de ella por la izquierda
+    if (filePage > totalPages) {
+        filePage--;
+    }
+
+    if (firstPage > 1) {
+        firstPage--;
+    }
+
+    finalPage = Math.min(
+        firstPage + VISIBLE_PAGES,
+        totalPages
+    );
+        
+    cleanFilesFromContainer();
+
+    await handleChangePageIndex(filePage);
 }
 
 const handleUploadFiles = async (event: Event): Promise<void> => {
@@ -240,16 +390,16 @@ const handleUploadFiles = async (event: Event): Promise<void> => {
         }
 
         selectedFiles.forEach(file => {
-            requestBody.append("proposal_documentation", file);
+            requestBody.append("project_documentation", file);
         });
 
-        const res = await uploadInfo(`proposal/${projectId}`, token, requestBody);
+        const res = await uploadInfo(`project/${projectId}`, token, requestBody);
 
         const jsonResult = await res.json();
 
         if (!res.ok)
         {
-            requestBody.delete("proposal_documentation");
+            requestBody.delete("project_documentation");
             showToast(jsonResult.message, "warning");
             return
         }
@@ -265,34 +415,39 @@ const handleUploadFiles = async (event: Event): Promise<void> => {
 
 (async () => {
     document.title = `Proyecto ${projectId}`;
-    let startCount = 5 * (filePage - 1);
-    let endCount = filePage * 5;
+    let startCount = FILES_PER_PAGE * (filePage - 1);
+    let endCount = filePage * FILES_PER_PAGE;
     
-    const proposalInfoRow = await getInfo(`proposal/${projectId}`, token);
-    const proposalMembersRow = await getInfo(`proposal/proposal-users/${projectId}`, token);
-
-    const proposalFilesRow = await getInfo(`proposal/proposal-files/${projectId}`, token);
+    const projectInfoRow = await getInfo(`project/${projectId}`, token);
+    const projectMembersRow = await getInfo(`project/project-users/${projectId}`, token);
+    await getFiles();
 
     const data = await getInfo("file-tipes", token)
     
-    if (!proposalInfoRow.ok || !proposalMembersRow.ok) {
+    const dataInfoJson = await projectInfoRow.json();
+    const dataMembersJson = await projectMembersRow.json();
+    let jsonData = await data.json() || [];
+
+    if (!projectInfoRow.ok || !projectMembersRow.ok) {
+        showToast(dataInfoJson.message, "warning");
+        showToast(dataMembersJson.message, "warning");
         return
     }
 
-    const dataInfoJson = await proposalInfoRow.json();
-    const dataMembersJson = await proposalMembersRow.json();
-    const filesJson = await proposalFilesRow.json();
-    let jsonData = await data.json() || [];
-
     fileTypes = jsonData["data"] || [];
-    proposalInfo = dataInfoJson["data"];
+    projectInfo = dataInfoJson["data"];
     membersInfo = dataMembersJson["data"];
-    filesInfo = filesJson["data"];
 
-    totalPages = Math.ceil(filesInfo.length / 5);
+    totalPages = Math.ceil(filesInfo.length / FILES_PER_PAGE);
 
-    proposalTitleElement!.textContent = proposalInfo.title;
-    proposalDescriptionElement!.textContent = proposalInfo.description;
+    firstPage = 1;
+
+    finalPage = Math.min(
+        firstPage + VISIBLE_PAGES,
+        totalPages
+    );
+    projectTitleElement!.textContent = projectInfo.title;
+    projectDescriptionElement!.textContent = projectInfo.description;
 
     const userMembersTable = document.getElementById("user-members-body");
 
@@ -301,9 +456,20 @@ const handleUploadFiles = async (event: Event): Promise<void> => {
         userMembersTable?.appendChild(rowMember);
     });
 
-    chargeFileList(startCount, endCount);
+    const orderedList = await chargeFileList(startCount, endCount);
 
-    pageIndexList("file-pagination", totalPages, handleChangePageIndex)
+    pageIndexList(
+        "file-pagination",
+        firstPage,
+        finalPage,
+        filePage,
+        endCount,
+        handleChangePageIndex,
+        handleChangeLeftIndex,
+        handleChangeRightIndex
+    );
+    validatePaginationToHiddeArrows(filePage, totalPages);
+    projectFiles?.appendChild(orderedList || document.createElement("ol"));
 })();
 
 /* ===================== GLOBAL ===================== */
@@ -313,22 +479,14 @@ declare global {
         handleChangePageIndex: (numberPage: number) => void;
         changeFilePage: (page: number) => void;
         handleUploadFiles: (event: Event) => void;
-        handleSendProposal: (event: Event) => void;
+        handleSendProject: (event: Event) => void;
         handleInputTitle: (event: Event) => void;
         handleInputDescription: (event: Event) => void;
-        handleFileUpload: (event: Event) => void;
-        handleDrop: (event: DragEvent) => void;
-        handleDragOver: (event: DragEvent) => void;
-        handleDragLeave: (event: DragEvent) => void;
     }
 }
 
 window.handleInputTitle = handleInputTitle;
 window.handleInputDescription = handleInputDescription;
-window.handleFileUpload = handleFileUpload;
-window.handleDrop = handleDrop;
-window.handleDragOver = handleDragOver;
-window.handleDragLeave = handleDragLeave;
 window.handleUploadFiles = handleUploadFiles;
 window.changeFilePage = changeFilePage;
 window.handleChangePageIndex = handleChangePageIndex;

@@ -50,9 +50,10 @@
 <script type="module" src="/dist/js/pages/control-panel-script.js"></script>
 <script src="/dist/js/components/toastify.js"></script>
 <script type="module">
-    import { navBarComponent } from "/dist/js/components/navbar.js";
+    import { navBarComponent } from "/dist/js/components/section/navbar.js";
+    import { userStore } from "/dist/js/functions/userStorage.js";
 
-    navBarComponent("Dónovan Hernández");
+    navBarComponent(userStore.name);
 
     const userContainer = document.querySelector(".user-identification");
 

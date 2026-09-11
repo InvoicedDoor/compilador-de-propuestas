@@ -51,3 +51,7 @@
 .left-arrow-image {
     background-image: url("/icons/circle-left-arrow.svg");
 }
+
+.focus-element-index {
+    background-color: #444;
+}

@@ -1,5 +1,6 @@
 import { auth } from "../functions/apiConnection.js";
 import { showToast } from "../components/modal/notifications.js";
+import { userStore } from '../functions/userStorage.js'
 
 const requestBody: Record<string, string> = {
     mail: "",
@@ -14,7 +15,8 @@ const handleInput = (event: Event) => {
         requestBody[String(target.id)] = target.value;
     } catch (e)
     {
-        console.log("Error al ingresar los valores")
+        showToast("Error al iniciar la sesión. Consulte al administrador de la aplicación.", "warning");
+
     }
 }
 
@@ -35,9 +37,13 @@ const handleLogin = async (event: any) => {
         }
 
 
-        localStorage.setItem("token", result.data)
+        localStorage.setItem("token", result.data["payload"])
 
-        showToast("Bienvenido.");
+        const user = result.data["user"];
+
+        showToast(`Bienvenido. ${user.name}`);
+        userStore.name = user.name;
+        userStore.role = user.rol;
 
         setTimeout(() => {
             window.location.href = "/";

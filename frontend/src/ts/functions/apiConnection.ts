@@ -1,5 +1,6 @@
 const BACKEND_uRL = "http://localhost:5000";
 // const BACKEND_uRL = "http://localhost";
+// const BACKEND_uRL = "http://192.168.1.172";
 
 export const getInfo = async (endpoint: string, token: string) => {
     const res = await fetch(`${BACKEND_uRL}/api/${endpoint}`, {
@@ -29,6 +30,26 @@ export const modifyInfo = async (endpoint: string, token: string, data: any, ele
             "Authorization": `Bearer ${token}`,
         },
         method: "PATCH",
+        body: data
+    });
+
+    return res
+}
+
+export const deleteInfo = async (endpoint: string, token: string, data: any, elements: Array<any>) => {
+    let url = `${BACKEND_uRL}/api/${endpoint}`
+    elements.map(element => {
+        if (url.includes("?"))
+            url = url.concat(`&${element.key}=${element.value}`)
+        else
+            url = url.concat(`?${element.key}=${element.value}`)
+    })
+    
+    const res = await fetch(url, {
+        headers: {
+            "Authorization": `Bearer ${token}`,
+        },
+        method: "DELETE",
         body: data
     });
 

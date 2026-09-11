@@ -4,26 +4,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="/css/index.css">
+    <link rel="stylesheet" href="/css/add-project.css">
+    <link rel="stylesheet" href="/css/add-files-style.css">
     <link rel="stylesheet" href="/css/general-style.css">
     <link rel="stylesheet" href="/css/navbar.css">
     <link rel="stylesheet" href="/css/modal.css">
     <link rel="icon" href="/icons/favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <link rel="stylesheet" href="/css/toastify.css">
+
     <title>Compilador de propuestas</title>
 </head>
-
 <body>
     <nav id="navbar" class="navbar-style"></nav>
-    <div class="screen-display">
-        <div id="cards-container" class="project-cards-container"></div>
-        <ol>
-        </ol>
-    </div>
 </body>
-
 </html>
-<script type="module" src="/dist/js/pages/index.js"></script>
+
+<script type="module" src="/dist/js/pages/user-profile.js"></script>
+<script type="module" src="/dist/js/functions/apiConnection.js"></script>
+<script type="module" src="/dist/js/components/modal/modal.js"></script>
+<script src="/dist/js/components/toastify.js"></script>
 <script type="module">
     import { navBarComponent } from "/dist/js/components/section/navbar.js";
     import { userStore } from "/dist/js/functions/userStorage.js";

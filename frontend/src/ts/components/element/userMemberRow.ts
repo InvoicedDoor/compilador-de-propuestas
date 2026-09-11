@@ -3,19 +3,19 @@ import { modalComponent } from "../modal/modal.js";
 import { positionElement } from "./positionElement.js";
 
 export const userMemberRow = (userMember: UserMemberInterface) => {
-    const idParagraph = document.createElement("p");
-    idParagraph.textContent = userMember.id.toString();
-    
-    const idColumn = document.createElement("td");
-    idColumn.className = "content-center";
-    idColumn.appendChild(idParagraph);
-    
     const nameParagraph = document.createElement("p");
     nameParagraph.textContent = userMember.name;
     
     const nameColumn = document.createElement("td");
-    nameColumn.className = "content-justift";
+    nameColumn.className = "content-justify";
     nameColumn.appendChild(nameParagraph);
+    
+    const positionParagraph = document.createElement("p");
+    positionParagraph.textContent = userMember.position.position;
+    
+    const positionColumn = document.createElement("td");
+    positionColumn.className = "content-center";
+    positionColumn.appendChild(positionParagraph);
     
     const rolParagraph = document.createElement("p");
     rolParagraph.textContent = userMember.rol.rol;
@@ -46,8 +46,8 @@ export const userMemberRow = (userMember: UserMemberInterface) => {
 
     const newRow = document.createElement("tr");
     newRow.className = "user-info-row";
-    newRow.appendChild(idColumn);
     newRow.appendChild(nameColumn);
+    newRow.appendChild(positionColumn);
     newRow.appendChild(rolColumn);
     newRow.appendChild(imageColumn);
     
