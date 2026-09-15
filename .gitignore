@@ -3,3 +3,7 @@
 
 # Carpeta mysql
 mysql-data/
+
+# Documentos
+documents/source/
+*.bkp
