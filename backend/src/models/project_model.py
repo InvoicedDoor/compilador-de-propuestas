@@ -1,7 +1,7 @@
 from __future__ import annotations
 from pydantic import Field, BaseModel
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, Integer, Boolean, Text, ForeignKey
+from sqlalchemy import String, Integer, Boolean, Text, ForeignKey, UniqueConstraint
 from typing import Optional
 
 from .base import Base
@@ -51,12 +51,6 @@ class ProjectStatusModel(Base):
 
     project: Mapped[list["Project"]] = relationship(back_populates="status")
 
-    action_event: Mapped["ProjectEventModel"] =  relationship(
-        back_populates="action",
-        lazy="joined"
-    )
-
-
 class ProjectUsersModel(Base):
     __tablename__ = "project_users_table"
 
@@ -87,7 +81,7 @@ class ProjectEventModel(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users_table.id"))
     project_id: Mapped[int] = mapped_column(ForeignKey("project_table.id"))
-    action_id: Mapped[int] = mapped_column(ForeignKey("project_status.id"))
+    status_code: Mapped[str] = mapped_column(String(30))
     approved: Mapped[bool] = mapped_column(Boolean, default=False)
     active: Mapped[bool] = mapped_column(Boolean, default=True)
 
@@ -101,7 +95,6 @@ class ProjectEventModel(Base):
         back_populates="project_event",
         lazy="joined"
     )
-    action: Mapped["ProjectStatusModel"] = relationship(
-        back_populates="action_event",
-        lazy="joined"
-    )
+
+    uq_user_status = UniqueConstraint(user_id, project_id, status_code)
+

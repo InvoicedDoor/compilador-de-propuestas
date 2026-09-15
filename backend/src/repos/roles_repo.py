@@ -1,8 +1,8 @@
 from src.utilities.logger.logger import Logger
 from src.dtos.roles_dto import ProjectRol
 from src.models.rol_model import ProjectRoleModel
-from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import select, and_, update
+from sqlalchemy.orm import Session
+from sqlalchemy import select, update
 import traceback
 
 

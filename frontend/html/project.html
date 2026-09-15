@@ -8,9 +8,11 @@
     <link rel="stylesheet" href="/css/navbar.css">
     <link rel="stylesheet" href="/css/modal.css">
     <link rel="stylesheet" href="/css/add-files-style.css">
+    <link rel="stylesheet" href="/css/modal-add-collaborators.css">
     <link rel="icon" href="/icons/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="/css/toastify.css">
     <link rel="stylesheet" href="/css/project.css">
+    <link rel="stylesheet" href="/css/left-bar-style.css">
     <link rel="stylesheet" href="/css/page-index-style.css">
     <title>Proyecto</title>
 </head>
@@ -22,7 +24,7 @@
             <h2 id="project-title"></h2>
         </div>
         <div class="project-content">
-            <div id="left-bar" class="left-content-section"></div>
+            <div id="left-bar" class="border-content-section left-container"></div>
             <div id="center-bar" class="center-content-section">
                 <div class="project-image-container">
                     <img class="project-image" src="/icons/file.svg" alt="Imagen del Proyecto">
@@ -35,7 +37,7 @@
                         <table class="user-members">
                             <thead>
                                 <tr>
-                                    <th class="content-justify">Nombre de Usuario</th>
+                                    <th class="content-justify">Usuario</th>
                                     <th class="content-center">Position</th>
                                     <th class="content-center">Rol</th>
                                     <th class="content-center">Acciones</th>
@@ -45,15 +47,15 @@
                         </table>
                     </div>
                     <div class="end-space">
-                        <button class="add-element-button user-members" onclick="openModal('addColaborators')">Agregar</button>
+                        <button class="add-element-button user-members" onclick="openModal('addColaborators')">Agregar colaboradores</button>
                     </div>
                 </div>
             </div>
-            <div id="right-bar" class="right-content-section">
+            <div id="right-bar" class="border-content-section right-container">
                 <div class="actions-header">
                     <h3>Archvios</h3>
                 </div>
-                <div id="file-list-element">
+                <div id="file-list-element" class="files-list-container">
                 </div>
                 <div id="file-pagination" class="page-index-bar">
                 </div>
@@ -67,22 +69,24 @@
                 <img class="action-close-icon-short" alt="" onclick="closeModal()">
             </div>
             <div id="modal-body" class="modal-body">
-                <!-- <div class="upload-files-container">
-                    <div class="files-container-full-screen no-show-files" id="show_files_container"></div>
-                    <div class="input-container-full-screen">
-                        <h3>Documentos complementarios</h3>
-                        <div class="upload-images-drop">
-                            <div class="drop-area" draggable="true" ondragover="handleDragOver(event)"
-                                ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
-                                <input class="files-input" type="file" name="" id="images"
-                                    onchange="handleFileUpload(event)" hidden />
+                <div class="adjust-complete-width-component">
+                    <h3>Enviar una invitación</h3>
+                    <div class="invite-users-container">
+                        <div class="input-group">
+                            <label for="mail-input">Email</label>
+                            <div class="input-add-invitation adjust-complete-width-component">
+                                <input class="mail-input" type="text" id="mail-input" placeholder="Ingresa el correo del colaborador">
+                                <button class="add-invitation-button"><i class="icon-style plus-icon"></i></button>
                             </div>
                         </div>
+                        <div class="show-new-collaborators-mail">
+                            No hay colaboradores
+                        </div>
                     </div>
-                </div> -->
+                </div>
             </div>
             <div class="input-container-full-screen">
-                <button id="send-request-button" class="upload-button" onclick="handleUploadFiles(event)"></button>
+                <button id="send-request-button" class="upload-button" onclick="handleUploadFiles(event)">Evniar invitaciones</button>
             </div>
         </div>
     </div>

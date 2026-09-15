@@ -1,5 +1,5 @@
 from .project_dto import UpdateProjectUserDto
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 class ProjectUserRequestBody(BaseModel):
     users: list[UpdateProjectUserDto]
@@ -12,3 +12,6 @@ class DeleteProjectUsersDto(BaseModel):
 
 class DeleteProjectUsersBody(BaseModel):
     users: list[DeleteProjectUsersDto]
+
+class DeleteProjectUserArgs(BaseModel):
+    user: DeleteProjectUsersDto = Field(None)

@@ -4,6 +4,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 0.5rem 1rem;
+    min-height: 100px;
 }
 
 .app-main-logo {
@@ -20,7 +21,7 @@
     align-items: center;
     gap: 15px;
     width: 15rem;
-    padding: 0.5rem 1rem;
+    padding: 0;
     border-radius: 6px;
     transition: background 0.2s;
 }
@@ -34,6 +35,7 @@
     height: 3rem;
     display: flex;
     justify-content: end;
+    align-items: center;
 }
 
 .icon-option {
@@ -73,4 +75,35 @@
     position: absolute;
     top: 100%;
     right: 0;
+}
+
+@media (max-width: 460px) {
+    /* .navbar-options,
+    .user-wrapper {
+        display: none;
+    } */
+
+    .navbar-options {
+        flex-direction: column-reverse;
+        justify-content: end;
+        align-items: baseline;
+        width: 70px;
+        min-height: 70px;
+        overflow-y: scroll;
+        overflow-x: hidden;
+    }
+
+    .user-identification,
+    .user-wrapper {
+        width: 100%;
+    }
+
+    .icon-option,
+    .user-wrapper {
+        margin: 15px;
+    }
+
+    .user-name {
+        display: none;
+    }
 }

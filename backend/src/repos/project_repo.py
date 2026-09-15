@@ -1,10 +1,21 @@
 from src.utilities.logger.logger import Logger
-from src.models.project_model import Project, ProjectFilesModel, ProjectUsersModel, ProjectStatusModel, ProjectEventModel
-from src.dtos.project_dto import ProjectFilesDto, ProjectUsersFilter, UpdateProjectUserDto
+from src.models.project_model import (
+    Project, 
+    ProjectFilesModel, 
+    ProjectUsersModel, 
+    ProjectStatusModel, 
+    ProjectEventModel)
+from src.dtos.project_dto import (
+    ProjectFilesDto, 
+    ProjectUsersFilter, 
+    UpdateProjectUserDto, 
+    ValidationUserRoleDto,
+    ProjectEventDto, 
+    ProjectEventStatusDto)
 from src.models.user_model import User, RequesterUser
 from src.models.auth_model import Auth
 from src.models.rol_model import Rol, ProjectRoleModel
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import select, and_, update
 from config import CAN_MODIFY_PROJECT_PROPERTIES
@@ -121,17 +132,66 @@ def get_project_by_id(session: Session, project_id: int):
         raise ValueError("Error al obtener la contraseña.")
 
 
+def get_status_events(session: Session, project_event: ProjectEventStatusDto):
+    try:
+        query = (
+            select(
+                User.name,
+                User.first_lastname,
+                User.second_lastname,
+                Rol.code,
+                Rol.rol,
+                ProjectEventModel.approved)
+            .join(
+                Project,
+                Project.id == ProjectEventModel.project_id,
+            )
+            .join(
+                User,
+                User.id == ProjectEventModel.user_id,
+            )
+            .join(
+                ProjectStatusModel,
+                ProjectStatusModel.status == ProjectEventModel.status_code,
+            )
+            .join(
+                Rol,
+                Rol.id == User.rol_id,
+            )
+            .join(
+                ProjectUsersModel,
+                Project.id == ProjectUsersModel.project_id
+            )
+            .join(
+                ProjectRoleModel,
+                ProjectRoleModel.id == ProjectUsersModel.project_role_id,
+            )
+            .where(
+                Project.id == project_event.project_id,
+                ProjectEventModel.status_code == project_event.status_code,
+                Rol.code.in_(project_event.approver_roles),
+                ProjectRoleModel.code.in_(project_event.project_role_status_code)
+            )
+        )
+
+        result = session.execute(query)
+
+        return result.all()
+
+    except:
+        Logger.add_to_system_log('error', traceback.format_exc())
+        raise ValueError("Error al obtener los eventos.")
+    
+
 def verify_project_user(session: Session, user_id: int, project_id: int):
     try:
         query = (
             select(ProjectUsersModel)
             .where(
-                and_(
-                    ProjectUsersModel.project_id == project_id, 
-                    ProjectUsersModel.user_id == user_id,
-                    ProjectUsersModel.active == 1
-                    )
-                )
+                ProjectUsersModel.project_id == project_id, 
+                ProjectUsersModel.user_id == user_id,
+                ProjectUsersModel.active == 1
+            )
         )
 
         result = session.execute(query)
@@ -169,6 +229,29 @@ def verify_project_approbation(session: Session, project_id, current_status):
     except:
         Logger.add_to_system_log('error', traceback.format_exc())
         raise ValueError("Error al comprobar el estatus del proyecto.")
+
+
+def validate_user_project_role(session: Session, validate_data: ValidationUserRoleDto):
+    try:
+        query = (select(ProjectRoleModel.id)
+                 .select_from(ProjectUsersModel)
+                 .join(ProjectUsersModel.role, isouter=True)
+                 .where(
+                     ProjectRoleModel.code.in_(validate_data.project_roles),
+                     ProjectUsersModel.user_id == validate_data.user_id,
+                     ProjectUsersModel.project_id == validate_data.project_id
+                     ))
+
+        result = session.execute(query)
+
+        role = result.scalar_one_or_none()
+
+        return role
+    
+    except Exception as ex:
+        Logger.add_to_system_log('error', traceback.format_exc())
+        raise ValueError("Error al obtener la contraseña.")
+    
 
 def get_project_users(session: Session, project_users: ProjectUsersFilter = None):
     try:
@@ -246,6 +329,25 @@ def get_project_files(session: Session, project_id: int):
         raise ValueError("Error al comprobar la propuesta del usuario.")
 
 
+def get_user_event_project(
+        session: Session, 
+        event: ProjectEventDto):
+    try:
+        query = (select(ProjectEventModel.id)
+                 .where(
+                     ProjectEventModel.project_id == event.project_id,
+                     ProjectEventModel.user_id == event.user_id,
+                     ProjectEventModel.status_code == event.status_code
+                 ))
+
+        result = session.execute(query)
+
+        return result.unique().scalar_one_or_none() != None
+    except Exception as ex:
+        Logger.add_to_system_log("error", ex)
+        raise SQLAlchemyError("Error en la base de datos.")
+
+
 # Función para agregar una propuesta.
 def send_project(session: Session, title: str, description: str):
     new_project = Project(
@@ -278,6 +380,22 @@ def add_project_files(session: Session, project_files_dto: ProjectFilesDto):
     except Exception as ex:
         Logger.add_to_system_log('error', traceback.format_exc())
         raise ValueError("Error al cargar el archivo.")
+
+
+def approve_project(
+        session: Session, 
+        body_approval: ProjectEventDto):
+    try:
+        new_event = ProjectEventModel(**body_approval.model_dump())
+
+        session.add(new_event)
+
+        session.flush()
+
+        return True
+    except:
+        return False
+
 
 
 def add_relation_user_project(session: Session, user_id: int, project_id: int, project_role_id: int):

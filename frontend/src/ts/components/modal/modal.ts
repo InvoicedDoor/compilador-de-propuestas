@@ -1,3 +1,5 @@
+import userStore from '../../storages/userStorage.js';
+
 export const modalComponent = () => {
     const container = document.createElement("div");
     container.className = "modal-card"
@@ -13,15 +15,9 @@ export const modalComponent = () => {
 
     if (closeSessionButton)
     {
-        closeSessionButton.addEventListener("click", closeSession);
+        closeSessionButton.addEventListener("click", userStore.userActions.logout);
     }
 
 
     return container;
 }
-
-const closeSession = () => {
-    localStorage.clear();
-
-    window.location.href = "/html/login.html";
-};

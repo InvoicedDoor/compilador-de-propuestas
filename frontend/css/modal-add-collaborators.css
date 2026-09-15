@@ -1,0 +1,64 @@
+.adjust-complete-width-component {
+    width: 100%;
+}
+
+.invite-users-container {
+    border: solid #555;
+    height: 250px;
+    padding: 30px;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1rem;
+}
+
+.show-new-collaborators-mail {
+    height: 65%;
+    width: 100%;
+    border: #444 solid 1px;
+    padding: 10px;
+}
+
+.mail-input {
+    width: 90%;
+}
+
+.add-invitation-button {
+    width: 10%;
+    border-radius: 0;
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    padding: 5px;
+    cursor: pointer;
+    transition: 0.2s;
+    border-radius: 4px;
+}
+
+.add-invitation-button:hover {
+    background-color: #43a047;
+}
+
+.add-invitation-button:active {
+    background-color: #255527;
+}
+
+.input-add-invitation {
+    display: flex;
+    flex-direction: row;
+}
+
+input {
+    background-color: #333;
+    border: 1px solid #444;
+    color: #e0e0e0;
+    padding: 0.6rem;
+    border-radius: 4px;
+}
+
+input:focus {
+    outline: none;
+    border-color: #4caf50;
+}

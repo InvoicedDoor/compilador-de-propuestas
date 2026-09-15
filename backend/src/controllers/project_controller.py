@@ -1,19 +1,42 @@
-from ..services.project_service import add_project_service, get_projects_service, get_project_by_id_service, add_project_files_service, get_project_users_service, get_project_files_service, inactive_project_file_service, update_project_status_service, add_project_user_service,inactive_project_user_service
-from ..dtos.project_dto import ProjectDto, DeleteProjectFileDto, ProjectFilter, ProjectEventDto, ProjectUserDto, ProjectUsersFilter
+from ..services.project_service import (
+    add_project_service, 
+    get_projects_service, 
+    get_project_by_id_service, 
+    add_project_files_service, 
+    get_project_users_service, 
+    get_project_files_service, 
+    update_project_status_service, 
+    add_project_user_service,
+    approve_project_service,
+    inactive_project_file_service, 
+    inactive_project_user_service)
+from ..dtos.project_dto import (
+    ProjectDto, 
+    DeleteProjectFileDto, 
+    ProjectFilter, 
+    ProjectEventDto, 
+    ProjectUserDto, 
+    ApproveProjectDto,
+    ProjectUsersFilter)
 from ..models.user_model import RequesterUser
-from ..dtos.project_request_dto import UpdateProjectStatusBody, DeleteProjectUsersBody
+from ..dtos.project_request_dto import (
+    UpdateProjectStatusBody, 
+    DeleteProjectUsersBody)
 from src.utilities.logger.logger import Logger
 from src.utilities.middlewares.veryfy_authentication import verify_authentication
-from src.utilities.handlers.http_exceptions import *
-from src.utilities.handlers.http_success import *
-from jwt import decode
+from src.utilities.handlers.http_exceptions import (
+    DomainError, 
+    InternalServerError,
+    BadRequest)
+from src.utilities.handlers.http_success import (
+    OK,
+    Created,
+    NoContent)
 from json import loads
 from config import Config
-from webargs import fields
 from werkzeug.exceptions import BadRequest as BdRq
 from pydantic import ValidationError
 from flask import Blueprint, request
-from webargs.flaskparser import use_args
 import traceback
 
 main = Blueprint('project_blueprint', __name__)
@@ -21,6 +44,7 @@ main = Blueprint('project_blueprint', __name__)
 key = Config.SECRET_KEY
 MAX_SIZE = 5 * 1024 * 1024
 
+# Obtiene el listado de proyectos
 @main.get('')
 @verify_authentication
 def get_all_project_controller():
@@ -39,6 +63,7 @@ def get_all_project_controller():
         raise InternalServerError('Error')
     
 
+# Obtiene el listado de usuarios por proyecto
 @main.get('/project-users/<int:id>')
 @verify_authentication
 def get_project_users_controller(id: int):
@@ -54,6 +79,7 @@ def get_project_users_controller(id: int):
         return InternalServerError('Error')
     
 
+# Obtiene el listado de archivos cargados por proyecto
 @main.get('/project-files/<int:id>')
 @verify_authentication
 def get_project_files_controller(id: int):
@@ -70,6 +96,7 @@ def get_project_files_controller(id: int):
     
 
 
+# Obtiene un proyecto por Id
 @main.get('/<int:id>')
 @verify_authentication
 def get_project_by_id_controller(id: int):
@@ -85,6 +112,7 @@ def get_project_by_id_controller(id: int):
         return InternalServerError('Error')
 
 
+# Carga un nuevo proyecto
 @main.post('')
 @verify_authentication
 def send_projects_controller():
@@ -139,6 +167,7 @@ def send_projects_controller():
         return InternalServerError('Error')
     
 
+# Add files to specific project
 @main.post('/<int:id>')
 @verify_authentication
 def add_project_files_controller(id):
@@ -180,6 +209,32 @@ def add_project_files_controller(id):
         Logger.add_to_system_log('error', traceback.format_exc())
         return InternalServerError('Error').to_dict()
 
+
+# Approve project status
+@main.post('/<int:project_id>/approve')
+@verify_authentication
+def approve_project_controller(project_id):
+    try:
+        requester = RequesterUser(**request.user)
+        body_request = ApproveProjectDto.model_validate(request.get_json())
+        """
+        {
+            approved: <true | false>
+        }
+        """
+        approve_project_service(requester, body_request, project_id)
+
+        return OK("Proyecto aprobado.").to_response()
+    
+    except DomainError as domErr:
+        return domErr.to_dict()
+
+    except Exception:
+        Logger.add_to_system_log('error', traceback.format_exc())
+        return InternalServerError('Error').to_dict()
+
+
+# Add new user to project
 @main.post('/project-users/<int:id>')
 @verify_authentication
 def add_project_users_controller(id: int):
@@ -199,6 +254,7 @@ def add_project_users_controller(id: int):
         return InternalServerError('Error').to_dict()
 
 
+# Update new project files
 @main.patch('/<int:id>')
 @verify_authentication
 def update_project_files_controller(id):
@@ -215,6 +271,7 @@ def update_project_files_controller(id):
         return InternalServerError('Error').to_dict()
 
 
+# Update project status (active or inactive)
 @main.patch('/project-status/<int:id>')
 @verify_authentication
 def update_project_status_controller(id):
@@ -239,6 +296,7 @@ def update_project_status_controller(id):
         return InternalServerError('Error').to_dict()
 
 
+# Update project users
 @main.patch('/project-users/<int:id>')
 @verify_authentication
 def update_project_users_controller(id: int):
@@ -258,15 +316,23 @@ def update_project_users_controller(id: int):
         return InternalServerError('Error').to_dict()
 
 
+# Remove project users
 @main.delete('/project-users/<int:id>')
 @verify_authentication
 def inactive_project_users_controller(id: int):
     try:
-        user_requester = RequesterUser(**request.user)
-        
-        users_list = DeleteProjectUsersBody.model_validate(request.get_json())
+        to_inactive_ids = None
 
-        inactive_project_user_service(user_requester, id, [user.user_id for user in users_list.users])
+        if "user_id" in request.args:
+            to_inactive_ids = [request.args.get("user_id", type=int)]
+
+        else:
+            users_list = DeleteProjectUsersBody.model_validate(request.get_json())
+            to_inactive_ids = [user.user_id for user in users_list.users]
+
+        user_requester = RequesterUser(**request.user)
+
+        inactive_project_user_service(user_requester, id, to_inactive_ids)
 
         return NoContent("Operación completada.").to_response()
     
@@ -278,23 +344,11 @@ def inactive_project_users_controller(id: int):
         return InternalServerError("Error al remover los usuarios del proyecto.").to_dict()
 
     except Exception as ex:
-        row_ex = ex.errors()[0]
-
-        err_response = f"{row_ex["msg"]}: "
-        count = 1
-
-        for field in row_ex["loc"]:
-            if count == len(row_ex["loc"]):
-                err_response += field
-
-            else:
-                err_response += f"{field}, "
-                count += 1
-
         Logger.add_to_system_log('error', traceback.format_exc())
-        return InternalServerError(err_response).to_dict()
-    
+        return InternalServerError("Error al inactivar al usuario.").to_dict()
 
+
+# Remove files from specific project
 @main.delete('/project-files')
 @verify_authentication
 def delete_project_files_controller():
@@ -330,3 +384,6 @@ def delete_project_files_controller():
     except Exception as e:
         Logger.add_to_system_log('error', traceback.format_exc())
         return InternalServerError("Error").to_dict()
+
+
+################# SOCKETS #################

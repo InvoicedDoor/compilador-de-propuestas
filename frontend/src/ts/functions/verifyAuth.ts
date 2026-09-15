@@ -1,5 +1,5 @@
 import { getInfo } from "./apiConnection.js";
-import { userStore } from '../functions/userStorage.js'
+import userStore from '../storages/userStorage.js'
 
 export const verifyAuth = async (token: string) =>
 {
@@ -15,6 +15,5 @@ export const verifyAuth = async (token: string) =>
 
     const jsonData = jsonResponse["data"];
 
-    userStore.name = jsonData["name"];    
-    userStore.role = jsonData["rol"];    
+    userStore.userActions.login(jsonData["name"], jsonData["rol"]);
 }

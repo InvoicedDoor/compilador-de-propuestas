@@ -1,18 +1,45 @@
-from ..repos.project_repo import add_relation_user_project, send_project, get_all_project, get_all_user_project, get_project_by_id, verify_project_user, get_project_users, get_project_user, get_project_files, update_relation_user_project, inactivate_project_file, verify_project_approbation, validate_project_user
+from ..repos.project_repo import (
+    add_relation_user_project, 
+    send_project, 
+    get_all_project, 
+    get_all_user_project, 
+    get_project_by_id, 
+    verify_project_user, 
+    get_project_users, 
+    get_project_user, 
+    get_project_files,
+    get_user_event_project,
+    approve_project, 
+    update_relation_user_project, 
+    get_status_events,
+    inactivate_project_file, 
+    verify_project_approbation,
+    validate_user_project_role, 
+    validate_project_user)
 from ..repos.roles_repo import get_role_by_code
-from ..repos.user_repo import get_user_by_id
+from ..repos.user_repo import validate_user
 from src.utilities.files_manager.upload_files_funtion import upload_files
 from ..repos.user_repo import validate_user
 from src.utilities.handlers.http_exceptions import *
 from src.utilities.logger.logger import Logger
 from src.models.user_model import RequesterUser
-from ..dtos.project_dto import ProjectDto, ImageMetadata, ProjectUserDto, ProjectFilter, ProjectEventDto, UpdateProjectUserDto, ProjectUsersFilter
+from ..dtos.project_dto import (
+    ProjectDto, 
+    ImageMetadata, 
+    ApproveProjectDto,
+    ProjectUserDto, 
+    ProjectFilter, 
+    ProjectEventDto, 
+    ValidationUserRoleDto,
+    UpdateProjectUserDto, 
+    ProjectEventStatusDto,
+    ProjectUsersFilter)
 from ..dtos.roles_dto import ProjectRol
 from src.utilities.db.db_connection import SessionLocal
-from config import ALTERNATIVE_STATUS, APROVAL_STEPS, CLOSER_STATUS
-
-
-BACKEND_URL = "http://localhost:5000"
+from config import (
+    ALTERNATIVE_STATUS, 
+    APPROVAL_STEPS, 
+    CLOSER_STATUS)
 
 def get_projects_service(user: RequesterUser, project: ProjectFilter):
     session = SessionLocal()
@@ -57,6 +84,7 @@ def get_projects_service(user: RequesterUser, project: ProjectFilter):
 
 def get_project_by_id_service(user: RequesterUser, project_id: int):
     session = SessionLocal()
+    company_roles_needed = []
     try:
         is_valid = verify_project_user(session, user.id, project_id)
 
@@ -65,10 +93,38 @@ def get_project_by_id_service(user: RequesterUser, project_id: int):
 
         project = get_project_by_id(session, project_id)
 
+        for step in APPROVAL_STEPS:
+            if APPROVAL_STEPS[step]["status"] == project.status.status:
+                company_roles_needed = APPROVAL_STEPS[step]["approver"]
+                break
+
+        if (company_roles_needed) == 0:
+            raise InternalServerError("Hubo un problema al obtener los roles.")
+
+        filter_events_status = ProjectEventStatusDto(
+            project_id=project_id,
+            status_code=project.status.status,
+            approver_roles=company_roles_needed
+        )
+
+        project_events = get_status_events(session, filter_events_status)
+
+        print(project_events)
+
         formated_project = {
             "id": project.id,
             "title": project.title,
             "description": project.description,
+            "project_events": [{
+                "name": event[0],
+                "first_lastname": event[1],
+                "second_lastname": event[2],
+                "role": {
+                    "code": event[3],
+                    "role": event[4]
+                },
+                "approved": event[5]
+            } for event in project_events],
             "active": project.active,
             "files": [
             {
@@ -292,6 +348,54 @@ def add_project_user_service(new_user_list: list[ProjectUserDto], requester: int
         session.close()
 
 
+def approve_project_service(requester: RequesterUser, body_approval: ApproveProjectDto, project_id: int):
+    session = SessionLocal()
+    try:
+        requester_id = requester.id
+        is_valid = verify_project_user(session, requester_id, project_id)
+
+        if not is_valid:
+            raise BadRequest("No puedes realizar esta acción.")
+
+        is_approver = validate_user_project_role(session, requester_id, project_id)
+
+        if not is_approver:
+            raise BadRequest("No tienes permisos para realizar esta acción.")
+
+        project_status = get_project_by_id(session, project_id)
+
+        new_event = ProjectEventDto(
+            user_id=requester_id,
+            project_id=project_id,
+            status_code=project_status.status.status,
+            approved=body_approval.approved
+        )
+
+        exist_event = get_user_event_project(session, new_event)
+
+        if exist_event:
+            raise Conflict("El estado ya fue aprobado/denegado por el usuario.")
+        
+        result = approve_project(session, new_event)
+
+        if not result:
+            session.rollback()
+            raise UnprocessableEntity("No se aprobó la fase del proyecto.")
+        session.commit()
+        return f"Proyecto aprobado."
+    
+    except DomainError:
+        raise 
+    
+    except Exception as ex:
+        Logger.add_to_system_log("error", f"Error: {ex}")
+        session.rollback()
+        raise InternalServerError("Error al aprobar el recurso. Consulte al administrador del sistema.") 
+    
+    finally:
+        session.close()
+
+
 def update_project_status_service(project_changes: ProjectEventDto, status: str):
     session = SessionLocal()
     APPROVAL_PERSON = []
@@ -313,13 +417,13 @@ def update_project_status_service(project_changes: ProjectEventDto, status: str)
 
         # Check the current project step
         if status not in ALTERNATIVE_STATUS:
-            for step in range(len(APROVAL_STEPS)):
-                if APROVAL_STEPS[f"STEP_{step + 1}"]["status"] == project.status.status:
+            for step in range(len(APPROVAL_STEPS)):
+                if APPROVAL_STEPS[f"STEP_{step + 1}"]["status"] == project.status.status:
                     current_step = step+1
-                    APPROVAL_PERSON = APROVAL_STEPS[f"STEP_{step + 1}"]["approver"]
+                    APPROVAL_PERSON = APPROVAL_STEPS[f"STEP_{step + 1}"]["approver"]
 
             # Validate correct next step
-            if status != APROVAL_STEPS[f"STEP_{current_step + 1}"]["status"]:
+            if status != APPROVAL_STEPS[f"STEP_{current_step + 1}"]["status"]:
                 # Verificar que corresponda al siguiente paso del flujo
                 raise BadRequest("No puedes actualizar a este estatus.") 
 
@@ -424,12 +528,12 @@ def inactive_project_status_service(project_changes: ProjectEventDto, status: bo
 
         # Check the current project step
         if status not in ALTERNATIVE_STATUS:
-            for step in range(len(APROVAL_STEPS)):
-                if APROVAL_STEPS[f"STEP_{step+1}"]["status"] == project.status.status:
+            for step in range(len(APPROVAL_STEPS)):
+                if APPROVAL_STEPS[f"STEP_{step+1}"]["status"] == project.status.status:
                     current_step = step+1
 
             # Validate correct next step
-            if status != APROVAL_STEPS[f"STEP_{current_step + 1}"]["status"]:
+            if status != APPROVAL_STEPS[f"STEP_{current_step + 1}"]["status"]:
                 # Verificar que corresponda al siguiente paso del flujo
                 raise BadRequest("No puedes actualizar a este estatus.") 
 

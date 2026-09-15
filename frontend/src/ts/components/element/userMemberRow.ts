@@ -4,6 +4,7 @@ import { positionElement } from "./positionElement.js";
 
 export const userMemberRow = (userMember: UserMemberInterface) => {
     const nameParagraph = document.createElement("p");
+    nameParagraph.className = "name-field";
     nameParagraph.textContent = userMember.name;
     
     const nameColumn = document.createElement("td");

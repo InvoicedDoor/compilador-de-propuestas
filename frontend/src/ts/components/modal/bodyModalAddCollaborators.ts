@@ -7,50 +7,35 @@ export const bodyAddCollaboratorsModal = () => {
     if (!modalBody)
         return;
 
-    modalBody.innerHTML = "";
+    return;
+
+    // modalBody.innerHTML = "";
+    // const overlay = document.getElementById("modal-overlay");
     
-    const fileInput = document.createElement("input");
-    fileInput.className = "files-input";
-    fileInput.type = "file";
-    fileInput.hidden = true;
-    fileInput.id = "images";
-    fileInput.onchange = (event) => handleFileUpload(event);
+    // // Cuerpo del modal
+    // const inputLabel = document.createElement("label");
+    // inputLabel.htmlFor = "mail-input";
 
-    const dropAreaContainer = document.createElement("div");
-    dropAreaContainer.className = "drop-area";
-    dropAreaContainer.draggable = true;
-    dropAreaContainer.ondragover = (event) => handleDragOver(event);
-    dropAreaContainer.ondragleave = (event) => handleDragLeave(event);
-    dropAreaContainer.ondrop = (event) => handleDrop(event);
-    dropAreaContainer.appendChild(fileInput);
+    // const mailInput = document.createElement("input");
+    // mailInput.type = "text";
+    // mailInput.id = "mail-input";
+    // mailInput.placeholder = "Ingresa el correo del nuevo colaborador.";
 
-    const uploadImagesDropContainer = document.createElement("div");
-    uploadImagesDropContainer.className = "upload-images-drop";
-    uploadImagesDropContainer.appendChild(dropAreaContainer);
+    // const inputGroupContainer = document.createElement("div");
+    // inputGroupContainer.className = "input-group";
+    // inputGroupContainer.appendChild(inputLabel);
+    // inputGroupContainer.appendChild(mailInput);
 
-    const h3Element = document.createElement("h3");
-    h3Element.textContent = "Documentos complementarios";
+    // const modalHeader = document.createElement("h3");
+    // modalHeader.textContent = "Agregar colaboradores";
 
-    const inputContainer = document.createElement("div");
-    inputContainer.className = "input-container-full-screen";
-    inputContainer.appendChild(h3Element);
-    inputContainer.appendChild(uploadImagesDropContainer);
+    // const addCollaboratorsContainer = document.createElement("div");
+    // addCollaboratorsContainer.className = "adjust-complete-width-component";
 
-    const filesContainerFullScreen = document.createElement("div");
-    filesContainerFullScreen.className = "files-container-full-screen no-show-files";
-    filesContainerFullScreen.id = "show_files_container";
+    // if (!overlay)
+    //     return;
 
-    const uploadFilesContainer = document.createElement("div");
-    uploadFilesContainer.className = "upload-files-container";
-    uploadFilesContainer.appendChild(filesContainerFullScreen);
-    uploadFilesContainer.appendChild(inputContainer);
-
-    const overlay = document.getElementById("modal-overlay");
-    
-    if (!overlay)
-        return;
-
-    overlay.style.display = "flex";
-    modalBody.appendChild(uploadFilesContainer);
-    sendRequestButton!.textContent = "Agregar colaborador";
+    // overlay.style.display = "flex";
+    // modalBody.appendChild(addCollaboratorsContainer);
+    // sendRequestButton!.textContent = "Agregar colaborador";
 }

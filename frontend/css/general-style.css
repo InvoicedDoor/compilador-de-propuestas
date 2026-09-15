@@ -25,3 +25,20 @@ h4 {
     font-weight: normal;
     color: #9e9e9e;
 }
+
+.icon-style {
+    display: inline-block;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    border-style: none;
+    padding: 0;
+    margin: 0;
+    height: 100%;
+    width: 100%;
+}
+
+.plus-icon {
+    background-image: url("/icons/plus.svg");
+}
+

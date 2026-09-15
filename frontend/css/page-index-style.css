@@ -55,3 +55,22 @@
 .focus-element-index {
     background-color: #444;
 }
+
+@media (max-height: 1000px) {
+    .page-index {
+        width: 30px;
+        height: 30px;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+    }
+
+
+    .right-arrow-image,
+    .left-arrow-image {
+        width: 20px;
+        height: 20px;
+    }
+}

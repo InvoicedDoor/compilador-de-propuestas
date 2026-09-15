@@ -83,11 +83,12 @@ export const navBarComponent = (userName: string): void => {
     userInformation.appendChild(userIdentificationContainer);
     userInformation.appendChild(modalSpace);
 
+    navbarOptions.appendChild(userInformation);
+
     /* ===================== APPEND ===================== */
 
     navbarContainer.appendChild(mainLogo);
     navbarContainer.appendChild(navbarOptions);
-    navbarContainer.appendChild(userInformation);
 };
 
 /* ===================== EVENTS ===================== */

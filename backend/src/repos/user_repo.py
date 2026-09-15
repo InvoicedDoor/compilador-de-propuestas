@@ -44,6 +44,7 @@ def get_users(user: UserFilter):
     except Exception as ex:
         Logger.add_to_system_log('error', traceback.format_exc())
         raise ValueError(f"Error: {ex}")
+
     
 def validate_user(user: RequesterUser):
     session = SessionLocal()
@@ -65,6 +66,7 @@ def validate_user(user: RequesterUser):
         return len(users.all()) < 0
     except:
         Logger.add_to_system_log('error', traceback.format_exc())
+
 
 def get_user_by_id(session: Session, user_id: int):
     try:

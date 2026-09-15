@@ -1,6 +1,6 @@
 import { auth } from "../functions/apiConnection.js";
 import { showToast } from "../components/modal/notifications.js";
-import { userStore } from '../functions/userStorage.js'
+import userStore from '../storages/userStorage.js';
 
 const requestBody: Record<string, string> = {
     mail: "",
@@ -42,8 +42,7 @@ const handleLogin = async (event: any) => {
         const user = result.data["user"];
 
         showToast(`Bienvenido. ${user.name}`);
-        userStore.name = user.name;
-        userStore.role = user.rol;
+        userStore.userActions.login(user.name, user.rol)
 
         setTimeout(() => {
             window.location.href = "/";

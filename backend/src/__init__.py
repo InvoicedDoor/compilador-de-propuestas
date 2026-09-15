@@ -9,8 +9,11 @@ from src.controllers import (
     file_types_controller, 
     )
 from src.utilities.handlers.http_exceptions import DomainError
+from src.websocket.controller import sock
 
 app = Flask(__name__)
+
+# sock.init_app(app)
 
 app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # 5MB
 

@@ -9,6 +9,8 @@ import { UserMemberInterface } from "../interfaces/userMember.interface.js";
 import FileTypeModel from "../models/fileType.model.js";
 import { showToast } from "../components/modal/notifications.js";
 import { pageIndexList, validatePaginationToHiddeArrows } from "../components/element/pageIndexList.js";
+import projectInfoStore from "../storages/projectInfoStorage.js";
+import { leftBarComponent } from "../components/section/leftBar.js";
 
 /* ===================== AUTH ===================== */
 
@@ -436,6 +438,9 @@ const handleUploadFiles = async (event: Event): Promise<void> => {
 
     fileTypes = jsonData["data"] || [];
     projectInfo = dataInfoJson["data"];
+    projectInfoStore.projectInfoActions.setInfo(projectInfo);
+
+    console.log(projectInfoStore.store.id)
     membersInfo = dataMembersJson["data"];
 
     totalPages = Math.ceil(filesInfo.length / FILES_PER_PAGE);
@@ -453,7 +458,9 @@ const handleUploadFiles = async (event: Event): Promise<void> => {
 
     membersInfo.map((member: UserMemberInterface) => {
         let rowMember = userMemberRow(member);
+        let rowMemberCopy = userMemberRow(member);
         userMembersTable?.appendChild(rowMember);
+        userMembersTable?.appendChild(rowMemberCopy);
     });
 
     const orderedList = await chargeFileList(startCount, endCount);
@@ -470,6 +477,7 @@ const handleUploadFiles = async (event: Event): Promise<void> => {
     );
     validatePaginationToHiddeArrows(filePage, totalPages);
     projectFiles?.appendChild(orderedList || document.createElement("ol"));
+    leftBarComponent();
 })();
 
 /* ===================== GLOBAL ===================== */

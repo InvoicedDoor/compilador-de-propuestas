@@ -23,11 +23,15 @@ with open("./src/utilities/json_configurations/project_status.json", "r", encodi
     json_config = json.load(archivo)
 
 
-APROVAL_STEPS = json_config["steps"]
+APPROVAL_STEPS = json_config["steps"]
+
+ROLE_APPROVER_PROJECT = json_config["role_approver_project"]
 
 ALTERNATIVE_STATUS = []
 
 CLOSER_STATUS = []
+
+BACKEND_URL = os.getenv("BACKEND_URL")
 
 CAN_MODIFY_PROJECT_PROPERTIES = json_config["can_modify_project_properties"]
 
