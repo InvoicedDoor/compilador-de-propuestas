@@ -1,12 +1,9 @@
-from __future__ import annotations
-from typing import Optional
-from pydantic import BaseModel, Field
 from sqlalchemy import Integer, String, Boolean, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from .base import Base
+from ..base import Base
 
-class User(Base):
+class UserModel(Base):
     __tablename__ = "users_table"
 
     id: Mapped[int] = mapped_column(Integer,primary_key=True, autoincrement=True)
@@ -45,21 +42,7 @@ class User(Base):
         lazy="joined"
     )
 
-class RequesterUser(BaseModel):
-    id: int = Field(None)
-    mail: str = Field(None)
-    rol: int = Field(None)
-
-class UserFilter(BaseModel):
-    id: int = Field(None)
-    name: str = Field(None)
-    first_lastname: str = Field(None)
-    second_lastname: str = Field(None)
-    rol_id: int = Field(None)
-    active: bool = Field(None)
-
-class RegisterUser(BaseModel):
-    name: str = Field(...)
-    first_lastname: str = Field(...)
-    second_lastname: Optional[str] = Field(None)
-    rol_id: Optional[int] = Field(None)
+    user_event: Mapped["Department"] = relationship( # pyright: ignore[reportUndefinedVariable]
+            back_populates="user",
+            lazy="joined"
+        )
