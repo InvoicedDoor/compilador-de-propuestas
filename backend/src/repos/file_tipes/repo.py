@@ -1,8 +1,9 @@
 from src.utilities.logger.logger import Logger
 from src.models.file_tipes.model import FileTypeModel
 from src.models.mime_tipes.model import MimeTypeModel
-from src.dtos.mime_tipes.dto import MimeTypeDto 
-from sqlalchemy.orm import Session
+from src.models.mime_categories.model import MimeCategoryModel
+from src.dtos.file_type_dto import MimeTypeDto 
+from sqlalchemy.orm import Session, selectinload
 from sqlalchemy import select
 import traceback
 

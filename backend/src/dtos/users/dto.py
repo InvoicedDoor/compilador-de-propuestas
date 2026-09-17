@@ -19,3 +19,9 @@ class RequesterUserDto(BaseModel):
     name: str = Field(...)
     mail: str = Field(...)
     rol: int = Field(...)
+
+class RegisterUserDto(BaseModel):
+    name: str = Field(...)
+    first_lastname: str = Field(...)
+    second_lastname: Optional[str] = Field(None)
+    rol_id: Optional[int] = Field(None)

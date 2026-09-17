@@ -6,7 +6,7 @@ from typing import Optional
 
 from src.models import Base
 
-class Project(Base):
+class ProjectModel(Base):
     __tablename__ = "project_table"
     id: Mapped[int] = mapped_column(Integer,primary_key=True, autoincrement=True)
     title: Mapped[str] = mapped_column(String(50))

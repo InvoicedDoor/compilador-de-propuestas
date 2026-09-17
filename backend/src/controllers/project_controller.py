@@ -5,23 +5,26 @@ from ..services.project_service import (
     add_project_files_service, 
     get_project_users_service, 
     get_project_files_service, 
-    update_project_status_service, 
+    update_project_status_service,
+    update_project_user_service, 
     add_project_user_service,
     approve_project_service,
     inactive_project_file_service, 
     inactive_project_user_service)
-from ..dtos.project_dto import (
+from src.dtos.projects.dto import (
     ProjectDto, 
-    DeleteProjectFileDto, 
     ProjectFilter, 
-    ProjectEventDto, 
-    ProjectUserDto, 
+    )
+from src.dtos.project_files.dto import DeleteProjectFileDto
+from src.dtos.project_events.dto import (
     ApproveProjectDto,
+    ProjectEventDto)
+from src.dtos.project_users.dto import (
+    ProjectUserDto, 
     ProjectUsersFilter)
-from ..models.user_model import RequesterUser
-from ..dtos.project_request_dto import (
-    UpdateProjectStatusBody, 
-    DeleteProjectUsersBody)
+from src.dtos.users.dto import RequesterUserDto
+from src.dtos.project_status.dto import UpdateProjectStatusBody
+from src.dtos.project_users.dto import DeleteProjectUsersBody, UpdateProjectUserBody
 from src.utilities.logger.logger import Logger
 from src.utilities.middlewares.veryfy_authentication import verify_authentication
 from src.utilities.handlers.http_exceptions import (
@@ -51,7 +54,7 @@ def get_all_project_controller():
     try:
         project: ProjectFilter = ProjectFilter()
 
-        data = get_projects_service(RequesterUser(**request.user), project)
+        data = get_projects_service(RequesterUserDto(**request.user), project)
 
         return OK("Datos encontrados.", data).to_response()
     
@@ -68,7 +71,7 @@ def get_all_project_controller():
 @verify_authentication
 def get_project_users_controller(id: int):
     try:
-        project = get_project_users_service(RequesterUser(**request.user), ProjectUsersFilter(project_id=id, active=1))
+        project = get_project_users_service(RequesterUserDto(**request.user), ProjectUsersFilter(project_id=id, active=1))
         return OK("Datos encontrados.", project).to_response()
     
     except DomainError as domErr:
@@ -84,7 +87,7 @@ def get_project_users_controller(id: int):
 @verify_authentication
 def get_project_files_controller(id: int):
     try:
-        project = get_project_files_service(RequesterUser(**request.user), project_id=id)
+        project = get_project_files_service(RequesterUserDto(**request.user), project_id=id)
         return OK("Datos encontrados.", project).to_response()
     
     except DomainError as domErr:
@@ -101,7 +104,7 @@ def get_project_files_controller(id: int):
 @verify_authentication
 def get_project_by_id_controller(id: int):
     try:
-        project = get_project_by_id_service(RequesterUser(**request.user), project_id=id)
+        project = get_project_by_id_service(RequesterUserDto(**request.user), project_id=id)
         return OK("Datos encontrados.", project).to_response()
     
     except DomainError as domErr:
@@ -215,7 +218,7 @@ def add_project_files_controller(id):
 @verify_authentication
 def approve_project_controller(project_id):
     try:
-        requester = RequesterUser(**request.user)
+        requester = RequesterUserDto(**request.user)
         body_request = ApproveProjectDto.model_validate(request.get_json())
         """
         {
@@ -239,7 +242,7 @@ def approve_project_controller(project_id):
 @verify_authentication
 def add_project_users_controller(id: int):
     try:
-        user_requester = RequesterUser(**request.user)
+        user_requester = RequesterUserDto(**request.user)
         users_list: list[ProjectUserDto] = request.json["users"]
 
         res = add_project_user_service(users_list, user_requester.id, id)
@@ -276,7 +279,7 @@ def update_project_files_controller(id):
 @verify_authentication
 def update_project_status_controller(id):
     try:
-        requester_user = RequesterUser(**request.user)
+        requester_user = RequesterUserDto(**request.user)
         json_data = UpdateProjectStatusBody.model_validate(request.get_json())
 
         project_changes: ProjectEventDto = ProjectEventDto(
@@ -301,10 +304,10 @@ def update_project_status_controller(id):
 @verify_authentication
 def update_project_users_controller(id: int):
     try:
-        user_requester = RequesterUser(**request.user)
-        users_list = UpdateProjectStatusBody.model_validate(request.get_json())
+        user_requester = RequesterUserDto(**request.user)
+        users_list = UpdateProjectUserBody.model_validate(request.get_json())
 
-        res = add_project_user_service(users_list, user_requester.id, id)
+        res = update_project_user_service(users_list, user_requester.id, id)
 
         return Created(res).to_response()
     
@@ -330,7 +333,7 @@ def inactive_project_users_controller(id: int):
             users_list = DeleteProjectUsersBody.model_validate(request.get_json())
             to_inactive_ids = [user.user_id for user in users_list.users]
 
-        user_requester = RequesterUser(**request.user)
+        user_requester = RequesterUserDto(**request.user)
 
         inactive_project_user_service(user_requester, id, to_inactive_ids)
 
@@ -353,7 +356,7 @@ def inactive_project_users_controller(id: int):
 @verify_authentication
 def delete_project_files_controller():
     try:
-        requester_user = RequesterUser(**request.user)
+        requester_user = RequesterUserDto(**request.user)
         delete_project_file = DeleteProjectFileDto(**request.args)
 
         inactive_project_file_service(requester_user.id, delete_project_file.project, delete_project_file.file)

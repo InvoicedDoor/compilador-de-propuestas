@@ -15,4 +15,4 @@ class ProjectFilesModel(Base):
     file_type_id: Mapped[int] = mapped_column(ForeignKey("file_tipes_table.id"))
     active: Mapped[bool] = mapped_column(Boolean, default=True)
 
-    project: Mapped["Project"] = relationship(back_populates="project_files") # type: ignore
+    project: Mapped["ProjectModel"] = relationship(back_populates="project_files") # type: ignore

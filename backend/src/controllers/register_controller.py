@@ -2,7 +2,7 @@ from flask import Blueprint, request
 import traceback
 from ..services.users_service import register_user
 from src.models.auth_model import RegisterCredentials
-from src.models.user_model import RegisterUser
+from src.dtos.users.dto import RegisterUserDto
 from src.utilities.handlers.http_exceptions import *
 from src.utilities.handlers.http_success import *
 from src.utilities.logger.logger import Logger
@@ -16,7 +16,7 @@ def register_route():
 
         credentials = RegisterCredentials(**data)
 
-        user = RegisterUser(**data)
+        user = RegisterUserDto(**data)
 
         res_service = register_user(
             user,

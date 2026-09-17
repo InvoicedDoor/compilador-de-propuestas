@@ -1,6 +1,6 @@
 from src.utilities.logger.logger import Logger
 from .dto import GetProject, AddProject, UpdateProject
-from .model import Project
+from .model import ProjectModel
 from sqlalchemy.orm import Session
 from sqlalchemy import select, and_, update
 import traceback
@@ -23,9 +23,9 @@ def get_all_project(session: Session, project: GetProject):
         if project.active is not None:
             filters["active"] = project.active
 
-        query = (select(Project)
+        query = (select(ProjectModel)
                  .filter_by(**filters)
-                 .join(Project.status, isouter=True))
+                 .join(ProjectModel.status, isouter=True))
 
         result = session.execute(query)
 
@@ -42,11 +42,11 @@ def get_all_project(session: Session, project: GetProject):
 def get_project_by_id(session: Session, project_id: int):
     try:
         query = (
-            select(Project)
-            .join(Project.project_user, isouter=True)
-            .join(Project.project_files, isouter=True)
-            .join(Project.status, isouter=True)
-            .where(Project.id == project_id)
+            select(ProjectModel)
+            .join(ProjectModel.project_user, isouter=True)
+            .join(ProjectModel.project_files, isouter=True)
+            .join(ProjectModel.status, isouter=True)
+            .where(ProjectModel.id == project_id)
         )
         
         result = session.execute(query)
@@ -95,9 +95,9 @@ def update_project(session: Session, project_update: UpdateProject, project_id: 
         if project_update.active:
             values["active"] = project_update.active
 
-        query = (update(Project)
+        query = (update(ProjectModel)
                  .values(values)
-                 .where(Project.id == project_id))
+                 .where(ProjectModel.id == project_id))
         
         result = session.execute(query)
         
@@ -117,12 +117,12 @@ def inactivate_project(session: Session, project_status: bool, project_id: int):
     try:
         values["active"] = project_status
 
-        query = (update(Project)
+        query = (update(ProjectModel)
                  .values(values)
                  .where(
                      and_(
-                         Project.id == project_id,
-                         Project.active == 1
+                         ProjectModel.id == project_id,
+                         ProjectModel.active == 1
                      )))
         
         result = session.execute(query)

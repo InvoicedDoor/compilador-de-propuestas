@@ -11,4 +11,4 @@ class DepartmentModel(Base):
     description: Mapped[str] = mapped_column(String(60), nullable=False)
     active: Mapped[bool] = mapped_column(Boolean, default=True)
 
-    department: Mapped[list["UserModel"]] = relationship(back_populates="role") # pyright: ignore[reportUndefinedVariable]
+    users: Mapped[list["UserModel"]] = relationship(back_populates="department") # pyright: ignore[reportUndefinedVariable]

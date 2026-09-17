@@ -1,6 +1,5 @@
-from ..repos.auth_repo import (
-    get_auth, 
-    change_password)
+from ..repos.auth.repo import get_auth
+from ..repos.credentials.repo import change_password
 from ..repos.user_repo import (
     get_user_by_mail)
 from src.utilities.hashing.hashing_password import (
@@ -43,7 +42,7 @@ def auth_service(mail: str, password: str):
             'id': user.id,
             'name': user.name,
             'mail': credentials.mail,
-            'rol': user.rol_id,
+            'rol': user.company_role_id,
             'exp': datetime.utcnow() + timedelta(minutes=120)
         }
 

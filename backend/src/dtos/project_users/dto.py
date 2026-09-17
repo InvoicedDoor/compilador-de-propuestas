@@ -8,6 +8,16 @@ class ProjectUserDto(BaseModel):
     project_id: int = Field(None)
     active: bool = Field(None)
 
+class InviteProjectUserDto(BaseModel):
+    mail: int = Field(None)
+    project_role_id: int = Field(None)
+    project_id: int = Field(None)
+    active: bool = Field(None)
+
+class AddProjectUserBody(BaseModel):
+    user_mail: str
+    project_role: str
+
 class ProjectUsersFilter(ProjectUserDto):
     id: int = Field(None)
 
@@ -16,6 +26,13 @@ class UpdateProjectUserDto(BaseModel):
     project_role_id: int = Field(None)
     project_id: int = Field(None)
     active: bool = Field(None)
+
+class UpdateProjectUserBody(BaseModel):
+    user_id: int
+    project_role: str
+
+class UpdateProjectUserRequest(BaseModel):
+    users: list[AddProjectUserBody]
 
 class ProjectUserResDto(BaseModel):
     id: int = Field(...)

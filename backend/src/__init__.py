@@ -8,6 +8,7 @@ from src.controllers import (
     register_controller,
     file_types_controller, 
     )
+from src.controllers.project_roles.controller import main_project_roles
 from src.utilities.handlers.http_exceptions import DomainError
 from src.websocket.controller import sock
 
@@ -42,6 +43,7 @@ def init_app(config):
         app.register_blueprint(user_controller.main, url_prefix='/api/users')
         app.register_blueprint(project_controller.main, url_prefix='/api/project')
         app.register_blueprint(file_types_controller.main, url_prefix='/api/file-tipes')
+        app.register_blueprint(main_project_roles, url_prefix='/api/project-roles')
 
         return app
     except Exception as ex:

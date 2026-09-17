@@ -1,5 +1,5 @@
 from ..services.users_service import get_users_service
-from ..models.user_model import UserFilter, RequesterUser
+from src.dtos.users.dto import UserFilterDto, RequesterUserDto
 from src.utilities.middlewares.veryfy_authentication import verify_authentication
 from flask import Blueprint, request
 from src.utilities.logger.logger import Logger
@@ -14,8 +14,8 @@ main = Blueprint('user_blueprint', __name__)
 @verify_authentication
 def get_users_controller():
     try:
-        user = UserFilter(**request.args)
-        user_requester = RequesterUser(**request.user)
+        user = UserFilterDto(**request.args)
+        user_requester = RequesterUserDto(**request.user)
 
         user_info = get_users_service(user, user_requester)
 

@@ -1,5 +1,8 @@
-from .user_model import User
-from .rol_model import Rol
-from .auth_model import Auth
-from .project_model import Project
-from .file_type_model import FileTypeModel, MimeTypeModel
+from .users.model import UserModel
+from .company_roles.model import CompanyRoleModel
+from .credentials.model import Auth
+from .projects.model import ProjectModel
+from .file_tipes.model import FileTypeModel
+from .mime_tipes.model import MimeTypeModel
+from .departments.model import DepartmentModel
+from .mime_categories.model import MimeCategoryModel

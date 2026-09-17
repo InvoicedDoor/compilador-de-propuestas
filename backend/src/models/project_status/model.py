@@ -13,4 +13,4 @@ class ProjectStatusModel(Base):
     description: Mapped[str] = mapped_column(String(40), nullable=False)
     active: Mapped[bool] = mapped_column(Boolean, nullable=False)
 
-    project: Mapped[list["Project"]] = relationship(back_populates="status")  # type: ignore
+    project: Mapped[list["ProjectModel"]] = relationship(back_populates="status")  # type: ignore

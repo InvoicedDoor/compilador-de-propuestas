@@ -13,17 +13,22 @@ class ProjectUsersModel(Base):
     project_role_id: Mapped[int] = mapped_column(ForeignKey("project_roles_table.id"))
     active: Mapped[bool] = mapped_column(Boolean, default=True)
 
-    users: Mapped[list["User"]] = relationship( # pyright: ignore[reportUndefinedVariable]
-        "User",
+    users: Mapped[list["UserModel"]] = relationship( # pyright: ignore[reportUndefinedVariable]
+        "UserModel",
         back_populates="user_project",
         lazy="joined"
     )
-    project: Mapped[list["Project"]] = relationship( # pyright: ignore
-        "Project",
+    project: Mapped[list["ProjectModel"]] = relationship( # pyright: ignore
+        "ProjectModel",
         back_populates="project_user",
         lazy="joined"
     )
     role: Mapped["ProjectRoleModel"] = relationship( # pyright: ignore[reportUndefinedVariable]
         back_populates="project_role",
+        lazy="joined"
+    )
+    project_user_event: Mapped[list["ProjectEventModel"]] = relationship( # type: ignore
+        "ProjectEventModel",
+        back_populates="project_user",
         lazy="joined"
     )

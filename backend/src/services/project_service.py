@@ -7,10 +7,11 @@ from ..repos.project_repo import (
     verify_project_user, 
     get_project_users, 
     get_project_user, 
+    get_project_user_by_mail, 
     get_project_files,
     get_user_event_project,
     approve_project, 
-    update_relation_user_project, 
+    update_user_project, 
     get_status_events,
     inactivate_project_file, 
     verify_project_approbation,
@@ -22,26 +23,28 @@ from src.utilities.files_manager.upload_files_funtion import upload_files
 from ..repos.user_repo import validate_user
 from src.utilities.handlers.http_exceptions import *
 from src.utilities.logger.logger import Logger
-from src.models.user_model import RequesterUser
-from ..dtos.project_dto import (
+from src.dtos.users.dto import RequesterUserDto
+from src.dtos.projects.dto import (
     ProjectDto, 
     ImageMetadata, 
-    ApproveProjectDto,
-    ProjectUserDto, 
-    ProjectFilter, 
+    ProjectFilter)
+from src.dtos.project_events.dto import (
+    ApproveProjectDto, 
     ProjectEventDto, 
-    ValidationUserRoleDto,
-    UpdateProjectUserDto, 
-    ProjectEventStatusDto,
+    ProjectEventStatusDto)
+from src.dtos.project_users.dto import (
+    ProjectUserDto, 
+    UpdateProjectUserDto,
+    UpdateProjectUserBody, 
+    InviteProjectUserDto,
     ProjectUsersFilter)
-from ..dtos.roles_dto import ProjectRol
 from src.utilities.db.db_connection import SessionLocal
 from config import (
     ALTERNATIVE_STATUS, 
     APPROVAL_STEPS, 
     CLOSER_STATUS)
 
-def get_projects_service(user: RequesterUser, project: ProjectFilter):
+def get_projects_service(user: RequesterUserDto, project: ProjectFilter):
     session = SessionLocal()
     try:
         project_format = []
@@ -82,7 +85,7 @@ def get_projects_service(user: RequesterUser, project: ProjectFilter):
         session.close()
 
 
-def get_project_by_id_service(user: RequesterUser, project_id: int):
+def get_project_by_id_service(user: RequesterUserDto, project_id: int):
     session = SessionLocal()
     company_roles_needed = []
     try:
@@ -147,7 +150,7 @@ def get_project_by_id_service(user: RequesterUser, project_id: int):
         session.close()
 
 
-def get_project_users_service(user: RequesterUser, project_user_filter: ProjectUsersFilter):
+def get_project_users_service(user: RequesterUserDto, project_user_filter: ProjectUsersFilter):
     session = SessionLocal()
     try:
         is_valid = verify_project_user(session, user.id, project_user_filter.project_id)
@@ -165,8 +168,8 @@ def get_project_users_service(user: RequesterUser, project_user_filter: ProjectU
                 project_info.users.second_lastname
             ])),
             "position": {
-                "id": project_info.users.rol.id,
-                "position": project_info.users.rol.rol
+                "id": project_info.users.role.id,
+                "position": project_info.users.role.rol
             },
             "rol": {
                 "id": project_info.role.code,
@@ -187,7 +190,7 @@ def get_project_users_service(user: RequesterUser, project_user_filter: ProjectU
         session.close()
 
 
-def get_project_files_service(user: RequesterUser, project_id: int):
+def get_project_files_service(user: RequesterUserDto, project_id: int):
     session = SessionLocal()
     try:
         is_valid = verify_project_user(session, user.id, project_id)
@@ -292,8 +295,9 @@ def add_project_files_service(user_id: int, project_id: int, project_files: list
         session.close()
 
 
-def add_project_user_service(new_user_list: list[ProjectUserDto], requester: int, project_id: int):
+def add_project_user_service(new_user_list: list[InviteProjectUserDto], requester: int, project_id: int):
     session = SessionLocal()
+    inexistent_users = ""
     try:
         results = 0
         roles = {}
@@ -309,6 +313,17 @@ def add_project_user_service(new_user_list: list[ProjectUserDto], requester: int
             raise BadRequest("No tienes permisos para realizar esta acción.")
 
         for new_user in new_user_list:
+            user_data = get_project_user_by_mail(session, new_user.mail)
+
+            if not user_data:
+                if inexistent_users == "":
+                    inexistent_users += user_data
+
+                else:
+                    inexistent_users += f", {user_data}"
+
+                continue
+
             code = new_user["project_role"]
 
             if code not in roles:
@@ -319,17 +334,87 @@ def add_project_user_service(new_user_list: list[ProjectUserDto], requester: int
             if not user_role:
                 continue
 
-            project_user = get_project_user(session, ProjectUsersFilter(project_id=project_id, user_id=new_user["user_id"]))
+            project_user = get_project_user(session, ProjectUsersFilter(project_id=project_id, user_id=user_data.user_id))
 
-            if project_user is None:
-                created = add_relation_user_project(session, new_user["user_id"], project_id, user_role)
+            if project_user is not None:
+                raise UnprocessableEntity("El personal ya participa en el proyecto.")
 
-                if created:
-                    results += 1
+            created = add_relation_user_project(session, user_data.user_id, project_id, user_role)
 
-        if results > 0:
+            if created:
+                results += 1
+
+        if results == 0:
+            session.rollback()
+            raise UnprocessableEntity("No se mandaron invitaciones. Los usuarios no existen en el sistema.")
+        
+        session.commit()
+        return f"Se agregaron {results} participantes. {inexistent_users if inexistent_users != "" else None}"
+
+    
+    except DomainError:
+        raise 
+    
+    except Exception as ex:
+        Logger.add_to_system_log("error", f"Error: {ex}")
+        session.rollback()
+        raise InternalServerError("Error al asignar al personal. Consulte con el administrador del sistema.") 
+    
+    finally:
+        session.close()
+
+
+def add_project_files_service(user_id: int, project_id: int, project_files: list, metadata: list[ImageMetadata]):
+    session = SessionLocal()
+    try:        
+        results = []
+
+        is_valid = verify_project_user(session, user_id, project_id)
+
+        if not is_valid:
+            raise BadRequest("No puedes realizar esta acción.")
+
+        results = upload_files(session, project_files, project_id)
+
+        if any(r["status"] is True for r in results):
             session.commit()
-            return f"Se agregaron {results} participantes."
+            return "Subido correctamente."
+
+        session.rollback()
+        raise UnprocessableEntity("Error insertando uno o más archivos.")
+    
+    except DomainError:
+        raise
+    
+    except Exception as ex:
+        Logger.add_to_system_log("error", f"Error: {ex}")
+        session.rollback()
+        raise DomainError("Error al procesar los archivos.") 
+    
+    finally:
+        session.close()
+
+
+def update_project_user_service(update_user: UpdateProjectUserBody, requester: int, project_id: int):
+    session = SessionLocal()
+    try:
+        results = 0
+
+        is_valid = verify_project_user(session, requester, project_id)
+
+        if not is_valid:
+            raise BadRequest("No puedes realizar esta acción.")
+
+        requester_role = get_project_user(session, ProjectUsersFilter(user_id=requester, project_id=project_id))
+
+        if requester_role.role.code not in ("ADMIN", "COADMIN"):
+            raise BadRequest("No tienes permisos para realizar esta acción.")
+
+        user_project_res = update_user_project(session, update_user, requester)
+
+        if user_project_res:
+            session.commit()
+            return f"Se modificó correctamente."
 
         session.rollback()
 
@@ -348,7 +433,7 @@ def add_project_user_service(new_user_list: list[ProjectUserDto], requester: int
         session.close()
 
 
-def approve_project_service(requester: RequesterUser, body_approval: ApproveProjectDto, project_id: int):
+def approve_project_service(requester: RequesterUserDto, body_approval: ApproveProjectDto, project_id: int):
     session = SessionLocal()
     try:
         requester_id = requester.id
@@ -432,7 +517,7 @@ def update_project_status_service(project_changes: ProjectEventDto, status: str)
 
         for approbation in project_approbations:
             if approbation not in APPROVAL_PERSON:
-                return  BadRequest("El proyecto no está autorizado para aprobarse.")
+                raise  BadRequest("El proyecto no está autorizado para aprobarse.")
                 
         # Update project status.
 
@@ -450,7 +535,7 @@ def update_project_status_service(project_changes: ProjectEventDto, status: str)
         session.close()
 
 
-def update_project_user_service(update_user_list: UpdateProjectUserDto, requester: int, project_id: int):
+def update_project_user_service(update_user: UpdateProjectUserBody, requester: int, project_id: int):
     session = SessionLocal()
     try:
         results = 0
@@ -466,35 +551,35 @@ def update_project_user_service(update_user_list: UpdateProjectUserDto, requeste
         if requester_role.role.code not in ("ADMIN", "COADMIN"):
             raise BadRequest("No tienes permisos para realizar esta acción.")
 
-        for update_user in update_user_list:
-            code = update_user["project_role"]
+        code = update_user.project_role
 
-            if code not in roles:
-                roles[code] = get_role_by_code(session, code)
+        if code not in roles:
+            roles[code] = get_role_by_code(session, code)
 
-            user_role = roles[code]
+        user_role = roles[code]
 
-            if not user_role:
-                continue
+        if not user_role:
+            raise BadRequest("No existe el rol.")
 
-            project_user = get_project_user(session, ProjectUsersFilter(project_id=project_id, user_id=update_user["user_id"]))
+        project_user = get_project_user(session, ProjectUserDto(project_id=project_id, user_id=update_user.user_id))
 
-            if project_user is None:
-                continue
+        if project_user is None:
+            raise BadRequest("No está registrado en el proyecto.")
 
-            updated = update_relation_user_project(session, project_id, update_user)
+        updated_project_user = ProjectUserDto(
+            user_id=update_user.user_id,
+            project_role_id=user_role,
+            project_id=project_id)
 
-            if updated:
-                results += 1
+        updated = update_user_project(session, updated_project_user, requester)
 
-        if results > 0:
+        if updated:
             session.commit()
-            return f"Se actualizaron {results} participantes."
+            return f"Se actualizó el participante."
 
         session.rollback()
 
-        raise UnprocessableEntity("El personal no participa en el proyecto."
-        )
+        raise BadRequest("No se ha actualizado el elemento.")
     
     except DomainError:
         raise 
@@ -585,7 +670,7 @@ def inactive_project_file_service(user_id: int, project_id: int, file_id: int):
     finally:
         session.close()
 
-def inactive_project_user_service(requester: RequesterUser, project_id, inactive_project_users: list[int]):
+def inactive_project_user_service(requester: RequesterUserDto, project_id, inactive_project_users: list[int]):
     session = SessionLocal()
     results = 0
     filters = {}
@@ -606,7 +691,7 @@ def inactive_project_user_service(requester: RequesterUser, project_id, inactive
             active=False
         )
 
-        result = update_relation_user_project(session,to_inactive_request, requester.id)
+        result = update_user_project(session,to_inactive_request, requester.id)
 
         if not result:
             raise UnprocessableEntity("No se pudo eliminar a los usuarios.")

@@ -15,9 +15,6 @@ class ProjectModel(Base):
 
     project_files: Mapped[list["ProjectFilesModel"]] = relationship(back_populates="project") # type: ignore
     project_user: Mapped[list["ProjectUsersModel"]] = relationship(back_populates="project") # type: ignore
-    project_event: Mapped[list["ProjectEventModel"]] = relationship( # type: ignore
-        back_populates="project",
-        lazy="joined"   
-    )
+
     status: Mapped["ProjectStatusModel"] = relationship(back_populates="project") # type: ignore
 

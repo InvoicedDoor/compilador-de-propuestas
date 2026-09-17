@@ -1,37 +1,36 @@
 from src.utilities.logger.logger import Logger
-from src.models.project_model import (
-    Project, 
-    ProjectFilesModel, 
-    ProjectUsersModel, 
-    ProjectStatusModel, 
-    ProjectEventModel)
-from src.dtos.project_dto import (
-    ProjectFilesDto, 
-    ProjectUsersFilter, 
-    UpdateProjectUserDto, 
-    ValidationUserRoleDto,
-    ProjectEventDto, 
-    ProjectEventStatusDto)
-from src.models.user_model import User, RequesterUser
-from src.models.auth_model import Auth
-from src.models.rol_model import Rol, ProjectRoleModel
+from src.models.projects.model import ProjectModel 
+from src.models.project_files.model import ProjectFilesModel
+from src.models.project_users.model import ProjectUsersModel
+from src.models.project_status.model import ProjectStatusModel
+from src.models.project_events.model import ProjectEventModel
+from src.dtos.project_files.dto import ProjectFilesDto
+from src.dtos.project_users.dto import ProjectUsersFilter, UpdateProjectUserDto, ProjectUserDto
+from src.dtos.company_roles.dto import ValidationUserRoleDto
+from src.dtos.project_events.dto import ProjectEventDto, ProjectEventStatusDto
+from src.models.users.model import UserModel
+from src.models.credentials.model import Auth
+from src.dtos.users.dto import RequesterUserDto
+from src.models.credentials.model import Auth
+from src.models.company_roles.model import CompanyRoleModel
+from src.models.project_roles.model import ProjectRoleModel
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import select, and_, update
 from config import CAN_MODIFY_PROJECT_PROPERTIES
 import traceback
 
-def validate_project_user(session: Session, requester_user: RequesterUser, project_id: int):
+def validate_project_user(session: Session, requester_user: RequesterUserDto, project_id: int):
     try:
         query = (select(ProjectUsersModel.id)
-                 .select_from(User)
-                 .join(User.user_project, isouter=True)
-                 .join(User.credentials, isouter=True)
+                 .select_from(UserModel)
+                 .join(UserModel.user_project, isouter=True)
+                 .join(UserModel.credentials, isouter=True)
                  .join(ProjectUsersModel.role, isouter=True)
                  .where(
-                        User.id == requester_user.id,
+                        UserModel.id == requester_user.id,
                         Auth.mail == requester_user.mail,
-                        User.rol_id == requester_user.rol,
+                        UserModel.company_role_id == requester_user.rol,
                         ProjectUsersModel.project_id == project_id,
                         ProjectRoleModel.code.in_(CAN_MODIFY_PROJECT_PROPERTIES)
                     ))
@@ -63,9 +62,9 @@ def get_all_project(session: Session, project: ProjectFilesDto):
         if project.active is not None:
             filters["active"] = project.active
 
-        query = (select(Project)
+        query = (select(ProjectModel)
                  .filter_by(**filters)
-                 .join(Project.status, isouter=True))
+                 .join(ProjectModel.status, isouter=True))
 
         result = session.execute(query)
 
@@ -94,12 +93,12 @@ def get_all_user_project(session: Session, user_id: int, project: ProjectFilesDt
         if project.active is not None:
             filters["active"] = project.active
 
-        query = (select(Project)
+        query = (select(ProjectModel)
         .filter_by(**filters)
-        .join(Project.project_user, isouter=True)
+        .join(ProjectModel.project_user, isouter=True)
         .join(ProjectUsersModel.users, isouter=True)
         .join(ProjectUsersModel.role, isouter=True)
-        .where(User.id == user_id))
+        .where(UserModel.id == user_id))
         
         result = session.execute(query)
 
@@ -116,11 +115,11 @@ def get_project_by_id(session: Session, project_id: int):
     
     try:
         query = (
-            select(Project)
-            .join(Project.project_user, isouter=True)
-            .join(Project.project_files, isouter=True)
-            .join(Project.status, isouter=True)
-            .where(Project.id == project_id)
+            select(ProjectModel)
+            .join(ProjectModel.project_user, isouter=True)
+            .join(ProjectModel.project_files, isouter=True)
+            .join(ProjectModel.status, isouter=True)
+            .where(ProjectModel.id == project_id)
         )
         
         result = session.execute(query)
@@ -136,40 +135,36 @@ def get_status_events(session: Session, project_event: ProjectEventStatusDto):
     try:
         query = (
             select(
-                User.name,
-                User.first_lastname,
-                User.second_lastname,
-                Rol.code,
-                Rol.rol,
+                UserModel.name,
+                UserModel.first_lastname,
+                UserModel.second_lastname,
+                CompanyRoleModel.code,
+                CompanyRoleModel.rol,
                 ProjectEventModel.approved)
+            .select_from(ProjectEventModel)
             .join(
-                Project,
-                Project.id == ProjectEventModel.project_id,
+                ProjectEventModel.project_user
             )
             .join(
-                User,
-                User.id == ProjectEventModel.user_id,
+                UserModel,
+                UserModel.id == ProjectUsersModel.user_id,
             )
             .join(
                 ProjectStatusModel,
                 ProjectStatusModel.status == ProjectEventModel.status_code,
             )
             .join(
-                Rol,
-                Rol.id == User.rol_id,
-            )
-            .join(
-                ProjectUsersModel,
-                Project.id == ProjectUsersModel.project_id
+                CompanyRoleModel,
+                CompanyRoleModel.id == UserModel.company_role_id,
             )
             .join(
                 ProjectRoleModel,
                 ProjectRoleModel.id == ProjectUsersModel.project_role_id,
             )
             .where(
-                Project.id == project_event.project_id,
+                ProjectModel.id == project_event.project_id,
                 ProjectEventModel.status_code == project_event.status_code,
-                Rol.code.in_(project_event.approver_roles),
+                CompanyRoleModel.code.in_(project_event.approver_roles),
                 ProjectRoleModel.code.in_(project_event.project_role_status_code)
             )
         )
@@ -205,16 +200,17 @@ def verify_project_user(session: Session, user_id: int, project_id: int):
 def verify_project_approbation(session: Session, project_id, current_status):
     try:
         query = (
-            select(Rol.code, Rol.rol)
+            select(CompanyRoleModel.code, CompanyRoleModel.rol)
             .select_from(ProjectEventModel)
-            .join(ProjectEventModel.user, isouter=False)
-            .join(ProjectEventModel.project, isouter=False)
-            .join(User.rol, isouter=False)
-            .join(Project.status, isouter=False)
+            .join(ProjectEventModel.project_user, isouter=False)
+            .join(ProjectUsersModel.project, isouter=False)
+            .join(ProjectUsersModel.users, isouter=False)
+            .join(UserModel.role, isouter=False)
+            .join(ProjectModel.status, isouter=False)
             .where(
                 and_(
                     ProjectStatusModel.status == current_status,
-                    ProjectEventModel.project_id == project_id,
+                    ProjectUsersModel.project_id == project_id,
                     ProjectEventModel.approved == 1
                     )
                 )
@@ -262,7 +258,7 @@ def get_project_users(session: Session, project_users: ProjectUsersFilter = None
         query = (
             select(ProjectUsersModel)
             .join(ProjectUsersModel.users, isouter=True)
-            .join(User.rol, isouter=True)
+            .join(UserModel.role, isouter=True)
             .where(
                 and_(
                     ProjectUsersModel.project_id == project_users.project_id,
@@ -301,7 +297,7 @@ def get_project_user(session: Session, project_user_filter: ProjectUsersFilter):
             .filter_by(**filters)
             .join(ProjectUsersModel.users, isouter=True)
             .join(ProjectUsersModel.role, isouter=True)
-            .join(User.rol, isouter=True))
+            .join(UserModel.role, isouter=True))
 
         result = session.execute(query)
 
@@ -311,6 +307,24 @@ def get_project_user(session: Session, project_user_filter: ProjectUsersFilter):
         Logger.add_to_system_log('error', traceback.format_exc())
         raise ValueError("Error al comprobar la información del usuario.")
 
+
+def get_project_user_by_mail(session: Session, project_user_mail: str):
+    try:
+        query = (
+            select(ProjectUsersModel)
+            .join(ProjectUsersModel.users, isouter=True)
+            .join(ProjectUsersModel.role, isouter=True)
+            .join(UserModel.role, isouter=True)
+            .join(UserModel.credentials, isouter=True)
+            .where(Auth.mail == project_user_mail))
+
+        result = session.execute(query)
+
+        return result.unique().scalar_one_or_none()
+    
+    except:
+        Logger.add_to_system_log('error', traceback.format_exc())
+        raise ValueError("Error al comprobar la información del usuario.")
 
 
 def get_project_files(session: Session, project_id: int):
@@ -350,7 +364,7 @@ def get_user_event_project(
 
 # Función para agregar una propuesta.
 def send_project(session: Session, title: str, description: str):
-    new_project = Project(
+    new_project = ProjectModel(
         title=title,
         description=description
     )
@@ -398,13 +412,14 @@ def approve_project(
 
 
 
-def add_relation_user_project(session: Session, user_id: int, project_id: int, project_role_id: int):
+def add_relation_user_project(session: Session, new_project_user: ProjectUserDto):
     
     try:
         new_relation = ProjectUsersModel(
-            user_id=user_id,
-            project_id=project_id,
-            project_role_id = project_role_id
+            user_id=new_project_user.user_id,
+            project_id=new_project_user.project_id,
+            project_role_id = new_project_user.project_role_id,
+            active=False
         )
         
         session.add(new_relation)
@@ -416,7 +431,7 @@ def add_relation_user_project(session: Session, user_id: int, project_id: int, p
         raise ValueError(f"Error: {ex}")
 
 
-def update_relation_user_project(
+def update_user_project(
         session: Session, 
         project_user: UpdateProjectUserDto,
         requester_id: int):
@@ -437,8 +452,9 @@ def update_relation_user_project(
         query = (
             update(ProjectUsersModel)
             .where(
-                ProjectUsersModel.user_id.in_(project_user.user_ids),
+                ProjectUsersModel.user_id == project_user.user_id,
                 ProjectUsersModel.project_id == project_user.project_id,
+                ProjectUsersModel.project_role_id != project_user.project_role_id,
                 ProjectUsersModel.user_id != requester_id)
             .values(**values)
         )
@@ -456,16 +472,17 @@ def update_relation_user_project(
         return False
 
     except Exception as ex:
+        print(ex)
         raise ValueError(f"Error: {ex}")
 
 
 def inactivate_project(session: Session, project_id: int, file_id: int):
     try:
         query = (
-            update(Project)
+            update(ProjectModel)
             .where(
-                and_(Project.id == file_id,
-                     Project.active == 1)))
+                and_(ProjectModel.id == file_id,
+                     ProjectModel.active == 1)))
 
         session.execute(query)
 

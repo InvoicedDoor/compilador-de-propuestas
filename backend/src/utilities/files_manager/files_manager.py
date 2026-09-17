@@ -1,11 +1,8 @@
 from src.repos.project_repo import add_project_files
-from src.dtos.project_dto import ProjectFilesDto
-from werkzeug.datastructures import FileStorage
+from src.dtos.project_files.dto import ProjectFilesDto
 from src.utilities.logger.logger import Logger
 from sqlalchemy.orm import Session
 from traceback import format_exc
-from shutil import copyfileobj
-from dotenv import load_dotenv
 from os.path import exists
 
 def write_files_function(file_bytes, path: str) -> bool:

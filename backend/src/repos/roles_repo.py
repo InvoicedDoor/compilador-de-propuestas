@@ -1,14 +1,14 @@
 from src.utilities.logger.logger import Logger
-from src.dtos.roles_dto import ProjectRol
-from src.models.rol_model import ProjectRoleModel
+from src.dtos.project_roles.dto import ProjectRoleDto
+from src.models.project_roles.model import ProjectRoleModel
 from sqlalchemy.orm import Session
-from sqlalchemy import select, update
+from sqlalchemy import select
 import traceback
 
 
 
 # Función para obtener todas las propuestas.
-def get_all_roles(session: Session, roles_filter: ProjectRol):
+def get_all_roles(session: Session, roles_filter: ProjectRoleDto):
     try:
 
         filters = {}

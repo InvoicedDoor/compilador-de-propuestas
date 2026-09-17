@@ -1,13 +1,13 @@
 from src.repos.project_repo import validate_project_user
 from src.utilities.db.db_connection import SessionLocal
-from src.models.user_model import RequesterUser
+from src.dtos.users.dto import RequesterUserDto
 from src.utilities.logger.logger import Logger
 
 def test_validate_project_user_invalid_project():
     try:
         session = SessionLocal()
 
-        user = RequesterUser(
+        user = RequesterUserDto(
             id=2,
             mail="donovanhdz167@gmail.com",
             rol=2

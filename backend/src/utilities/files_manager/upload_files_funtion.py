@@ -1,6 +1,6 @@
 from src.utilities.middlewares.verify_files import verify_extension, verify_mime, clean_name, create_secure_name
-from src.dtos.project_dto import ProjectFilesDto
-from src.dtos.file_type_dto import MimeTypeDto
+from src.dtos.project_files.dto import ProjectFilesDto
+from src.dtos.mime_tipes.dto import MimeTypeDto
 from src.repos.file_type_repo import get_file_type_by_filter
 from src.utilities.files_manager.files_manager import process_file, write_files_function
 from src.utilities.handlers.http_exceptions import *
