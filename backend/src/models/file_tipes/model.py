@@ -18,3 +18,7 @@ class FileTypeModel(Base):
     mime_type: Mapped["MimeTypeModel"] = relationship( # type: ignore
         back_populates="file_types"
     )
+
+    project_files: Mapped[list["ProjectFilesModel"]] = relationship( # type: ignore
+        back_populates="file_tipes"
+    )

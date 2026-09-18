@@ -18,8 +18,8 @@ class Auth(Base):
 
     active: Mapped[bool] = mapped_column(Boolean,default=True)
 
-    user: Mapped["User"] = relationship( # type: ignore
-        "User",
+    user: Mapped["UserModel"] = relationship( # type: ignore
+        "UserModel",
         back_populates="credentials",
         lazy="joined"
     )

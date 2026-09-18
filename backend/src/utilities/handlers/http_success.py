@@ -1,5 +1,4 @@
-from flask import jsonify
-
+from fastapi.responses import JSONResponse
 class SuccessResponse:
 
     status_code = 200
@@ -22,7 +21,7 @@ class SuccessResponse:
         if self.data is not None:
             response["data"] = self.data
 
-        return jsonify(response), self.status_code
+        return JSONResponse(response, self.status_code)
     
 
 class OK(SuccessResponse):

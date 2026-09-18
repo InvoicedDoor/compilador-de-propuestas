@@ -1,40 +1,50 @@
-from flask import request, jsonify
-import functools
+from fastapi.requests import Request
+from fastapi import HTTPException
 import jwt
 import os
 from dotenv import load_dotenv
-from traceback import format_exc
-from src.utilities.logger.logger import Logger
 
 load_dotenv()
 
 key = os.getenv("SECRET_KEY")
 
+async def verify_authentication(request: Request):
 
-def verify_authentication(func):
-    @functools.wraps(func)
-    def wrapper(*args, **kwargs):
-        auth_header = request.headers.get("Authorization")
+    auth_header = request.headers.get("Authorization")
 
-        if not auth_header:
-            return jsonify({"message": "Authorization header missing"}), 401
+    if not auth_header:
+        raise HTTPException(
+            status_code=401,
+            detail="Authorization header missing"
+        )
 
-        if not auth_header.startswith("Bearer "):
-            return jsonify({"message": "Invalid token format"}), 401
+    if not auth_header.startswith("Bearer "):
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid token format"
+        )
 
-        token = auth_header.split(" ")[1]
+    token = auth_header.split(" ", 1)[1]
 
-        try:
-            decoded_token = jwt.decode(token, key, algorithms=["HS256"])
-            request.user = decoded_token  # opcional: guardar payload
-        except jwt.ExpiredSignatureError:
-            return jsonify({"message": "Token expirado"}), 401
-        except jwt.InvalidTokenError:
-            return jsonify({"message": "Token inválido"}), 401
-        except Exception:
-            Logger.add_to_system_log("error", format_exc())
-            return jsonify({"message": "Authentication error"}), 401
+    try:
+        decoded_token = jwt.decode(
+            token,
+            key,
+            algorithms=["HS256"]
+        )
 
-        return func(*args, **kwargs)
+        request.state.user = decoded_token
 
-    return wrapper
+        return decoded_token
+
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(
+            status_code=401,
+            detail="Token expirado"
+        )
+
+    except jwt.InvalidTokenError:
+        raise HTTPException(
+            status_code=401,
+            detail="Token inválido"
+        )

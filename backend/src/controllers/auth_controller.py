@@ -1,27 +1,27 @@
 from ..services.auth_service import auth_service, change_password_service, get_user_by_id_service
 from src.utilities.middlewares.veryfy_authentication import verify_authentication
-from flask import Blueprint, request
+from fastapi import Request, APIRouter, Depends
 from src.utilities.logger.logger import Logger
 from src.utilities.handlers.http_exceptions import *
 from src.utilities.handlers.http_success import *
 import traceback
 
-main = Blueprint('auth_blueprint', __name__)
+auth_routes = APIRouter()
 
-
-@main.get('')
-@verify_authentication
-def verify_auth():
-    user_info = get_user_by_id_service(request.user["id"])
+@auth_routes.get('')
+async def verify_auth(request: Request, _: None = Depends(verify_authentication)):
+    requester_info = request.state.user
+    user_info = get_user_by_id_service(requester_info["id"])
 
     return OK("Authorized", user_info).to_response()
 
 
-@main.post('')
-def auth_route():
+@auth_routes.post('')
+async def auth_route(request: Request):
     try:
-        mail = request.json['mail']
-        password = request.json['password']
+        request_body = await request.json()
+        mail = request_body['mail']
+        password = request_body['password']
         payload, user_info = auth_service(mail, password)
 
         return OK(data={"payload": payload, "user": user_info}).to_response()
@@ -34,7 +34,7 @@ def auth_route():
         raise InternalServerError('Error')
 
 
-# @main.post('')
+# @auth_routes.post('')
 # @verify_authentication
 # def unauthorize_token_controller():
 #     try:
@@ -52,13 +52,14 @@ def auth_route():
 #         raise InternalServerError('Error')
 
 
-@main.post("/change-password")
-def change_password_route():
+@auth_routes.post("/change-password")
+async def change_password_route(request: Request):
     try:
-        mail = request.json["mail"]
-        old_password = request.json['old_password']
-        new_password = request.json['new_password']
-        new_password_confirmation = request.json['new_password_confirmation']
+        request_body = await request.json()
+        mail = request_body["mail"]
+        old_password = request_body['old_password']
+        new_password = request_body['new_password']
+        new_password_confirmation = request_body['new_password_confirmation']
 
         res_service = change_password_service(mail, old_password, new_password, new_password_confirmation)
 

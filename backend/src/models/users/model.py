@@ -14,12 +14,14 @@ class UserModel(Base):
 
     second_lastname: Mapped[str] = mapped_column(String(40))
     
-    rol_id: Mapped[int] = mapped_column(ForeignKey("company_roles_table.id"), default=2)
+    company_role_id: Mapped[int] = mapped_column(ForeignKey("company_roles_table.id"), default=2)
+
+    department_id: Mapped[int] = mapped_column(ForeignKey("departments_table.id"))
 
     active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
-    rol: Mapped["Rol"] = relationship( # pyright: ignore[reportUndefinedVariable]
-        "Rol",
+    role: Mapped["CompanyRoleModel"] = relationship( # pyright: ignore[reportUndefinedVariable]
+        "CompanyRoleModel",
         back_populates="users",
         lazy="joined"
     )
@@ -32,17 +34,11 @@ class UserModel(Base):
     )
 
     user_project: Mapped[list["ProjectUsersModel"]] = relationship( # pyright: ignore[reportUndefinedVariable]
-        "ProjectUsersModel",
         back_populates="users",
         lazy="joined"
     )
 
-    user_event: Mapped["ProjectEventModel"] = relationship( # pyright: ignore[reportUndefinedVariable]
-        back_populates="user",
-        lazy="joined"
-    )
-
-    user_event: Mapped["Department"] = relationship( # pyright: ignore[reportUndefinedVariable]
-            back_populates="user",
+    department: Mapped["DepartmentModel"] = relationship( # pyright: ignore[reportUndefinedVariable]
+            back_populates="users",
             lazy="joined"
         )

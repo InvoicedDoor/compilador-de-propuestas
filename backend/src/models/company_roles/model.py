@@ -5,12 +5,11 @@ from typing import Optional
 from ..base import Base
 
 class CompanyRoleModel(Base):
-    __tablename__ = "project_roles_table"
+    __tablename__ = "company_roles_table"
     id: Mapped[int] = mapped_column(Integer,
                                     primary_key=True,
                                     autoincrement=True)
-    code: Mapped[str] = mapped_column(String(30), nullable=False)
-    description: Mapped[str] = mapped_column(String(40), nullable=False)
-    active: Mapped[bool] = mapped_column(Boolean, default=True)
+    code: Mapped[str] = mapped_column(String(20), nullable=False)
+    rol: Mapped[str] = mapped_column(String(40), nullable=False)
 
-    project_role: Mapped["ProjectUsersModel"] = relationship(back_populates="role") # pyright: ignore[reportUndefinedVariable]
+    users: Mapped[list["UserModel"]] = relationship(back_populates="role") # pyright: ignore[reportUndefinedVariable]

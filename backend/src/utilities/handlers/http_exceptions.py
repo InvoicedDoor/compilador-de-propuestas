@@ -1,4 +1,4 @@
-from flask import jsonify
+from fastapi.responses import JSONResponse
 
 class DomainError(Exception):
 
@@ -28,7 +28,7 @@ class DomainError(Exception):
         if self.data is not None:
             response["data"] = self.data
 
-        return jsonify(response), self.status_code
+        return JSONResponse(response, self.status_code)
 
 class BadRequest(DomainError):
 

@@ -1,13 +1,14 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 from src.utilities.db.db_connection import SessionLocal
-from src.models.user_model import RequesterUser, User, UserFilter
-from src.models.rol_model import Rol
-from src.models.auth_model import Auth
+from src.models.users.model import UserModel
+from src.dtos.users.dto import RequesterUserDto, UserFilterDto
+from src.models.company_roles.model import CompanyRoleModel
+from src.models.credentials.model import Auth
 from src.utilities.logger.logger import Logger
 import traceback
 
-def get_users(user: UserFilter):
+def get_users(user: UserFilterDto):
     session = SessionLocal()
     try:
         filters = {}
@@ -32,9 +33,9 @@ def get_users(user: UserFilter):
 
 
 
-        query = (select(User)
+        query = (select(UserModel)
                  .filter_by(**filters)
-                 .join(User.rol, isouter=True))
+                 .join(UserModel.role, isouter=True))
 
         result = session.execute(query)
 
@@ -46,17 +47,17 @@ def get_users(user: UserFilter):
         raise ValueError(f"Error: {ex}")
 
     
-def validate_user(user: RequesterUser):
+def validate_user(user: RequesterUserDto):
     session = SessionLocal()
     try:
-        query = (select(User)
+        query = (select(UserModel)
                  .options(
-                     selectinload(User.credentials)
+                     selectinload(UserModel.credentials)
                      .selectinload(Auth.user)
                  )
-                 .where(User.id == user.id
+                 .where(UserModel.id == user.id
                         and Auth.mail == user.mail
-                        and User.rol_id == user.rol
+                        and UserModel.rol_id == user.rol
                         and user.rol == 1))
         
         result = session.execute(query)
@@ -70,9 +71,9 @@ def validate_user(user: RequesterUser):
 
 def get_user_by_id(session: Session, user_id: int):
     try:
-        query = (select(User)
-                 .join(User.rol, isouter=True)
-                 .where(User.id == user_id))
+        query = (select(UserModel)
+                 .join(UserModel.role, isouter=True)
+                 .where(UserModel.id == user_id))
         
         result = session.execute(query)
 

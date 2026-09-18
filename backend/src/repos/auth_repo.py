@@ -1,7 +1,7 @@
 from src.utilities.db.db_connection import SessionLocal
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload, Session
-from src.models.auth_model import Auth
+from src.models.credentials.model import Auth
 from src.utilities.logger.logger import Logger
 import traceback
 

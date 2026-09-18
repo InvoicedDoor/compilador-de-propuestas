@@ -7,19 +7,21 @@ from ..repos.user_repo import (
 )
 from src.utilities.hashing.hashing_password import (
     password_encryption)
-from src.models.user_model import (
-    RegisterUser, 
-    User)
-from src.models.auth_model import (
-    RegisterCredentials,
+from src.models.users.model import (
+    UserModel)
+from src.dtos.users.dto import UserDto
+from src.models.credentials.model import (
     Auth)
-from src.models.user_model import RequesterUser, UserFilter
+from src.dtos.credentials.dto import (
+    CredentialDto
+)
+from src.dtos.users.dto import RequesterUserDto, UserFilterDto, UserDto
 from src.utilities.handlers.http_exceptions import *
 from src.utilities.db.db_connection import SessionLocal
 from src.utilities.logger.logger import Logger
 from traceback import format_exc
 
-def get_users_service(user: UserFilter, user_requester: RequesterUser):
+def get_users_service(user: UserFilterDto, user_requester: RequesterUserDto):
     session = SessionLocal()
     try:
         users_format = []
@@ -62,14 +64,14 @@ def get_user_by_id_service(user_id: int):
             raise InternalServerError("Error al obtener los datos de usuario. Informar a soporte.")
         json_format = {
             "name": repo_res.name,
-            "rol": repo_res.rol.rol
+            "rol": repo_res.role.rol
         }
         return json_format
     except Exception as ex:
         return {}
 
 
-def register_user(user: RegisterUser, credentials: RegisterCredentials):
+def register_user(user: UserDto, credentials: CredentialDto):
     session = SessionLocal()
 
     try:
@@ -78,7 +80,7 @@ def register_user(user: RegisterUser, credentials: RegisterCredentials):
         if exist_user:
             raise Conflict("El usuario ya existe en la base de datos.")
         
-        new_user = User(**user.model_dump())
+        new_user = UserModel(**user.model_dump())
 
         saved_user = register_user_repo(session, new_user)
 

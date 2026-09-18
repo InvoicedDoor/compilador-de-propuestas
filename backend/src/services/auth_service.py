@@ -43,7 +43,7 @@ def auth_service(mail: str, password: str):
             'id': user.id,
             'name': user.name,
             'mail': credentials.mail,
-            'rol': user.rol_id,
+            'rol': user.company_role_id,
             'exp': datetime.utcnow() + timedelta(minutes=120)
         }
 

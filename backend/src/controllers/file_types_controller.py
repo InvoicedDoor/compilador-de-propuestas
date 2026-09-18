@@ -3,13 +3,13 @@ from src.utilities.middlewares.veryfy_authentication import verify_authenticatio
 from src.utilities.handlers.http_exceptions import *
 from src.utilities.handlers.http_success import *
 from ..services.filte_type_service import get_file_tipes_service
-from flask import Blueprint, request
+from fastapi import Request, APIRouter
 from src.utilities.logger.logger import Logger
 import traceback
 
-main = Blueprint('file_tipes_blueprint', __name__)
+file_tipes_routes = APIRouter()
 
-@main.get('')
+@file_tipes_routes.get('')
 @verify_authentication
 def get_all_file_tipes_route():
     try:
