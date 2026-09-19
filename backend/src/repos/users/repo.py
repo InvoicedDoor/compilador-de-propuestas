@@ -109,6 +109,38 @@ def get_user_by_mail(session: Session, mail: str):
 
         raise ValueError(f"Error: {ex}")
 
+def get_bacth_user_by_mails(session: Session, mails: list[str]):
+
+    try:
+
+        query = select(Auth.mail,
+                       Auth.user_id).where(
+            Auth.mail.in_(mails)
+        )
+
+        result = session.execute(query)
+
+        credentials = result.mappings().all()
+
+        formated_credentials = {
+            credential.mail: {
+                "user_id": credential.user_id
+            }
+            for credential in credentials        
+        } 
+
+        return formated_credentials
+
+
+    except Exception as ex:
+
+        Logger.add_to_system_log(
+            'error',
+            traceback.format_exc()
+        )
+
+        raise ValueError(f"Error: {ex}")
+
 def register_user_repo(
     session: Session,
     credentials: Auth

@@ -4,7 +4,7 @@ from src.models.project_users.model import ProjectUsersModel
 from src.dtos.project_files.dto import ProjectFilesDto
 from src.dtos.project_users.dto import (
     ProjectUsersFilter, 
-    UpdateProjectUserDto, 
+    ProjectUserDto
 )
 from src.dtos.company_roles.dto import ValidationUserRoleDto
 from src.models.users.model import UserModel
@@ -13,7 +13,7 @@ from src.models.credentials.model import Auth
 from src.models.project_roles.model import ProjectRoleModel
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy import select, update
+from sqlalchemy import select, update, insert
 from config import CAN_MODIFY_PROJECT_PROPERTIES
 import traceback
 
@@ -158,11 +158,65 @@ def get_project_user(session: Session, project_user_filter: ProjectUsersFilter):
             .filter_by(**filters)
             .join(ProjectUsersModel.users, isouter=True)
             .join(ProjectUsersModel.role, isouter=True)
-            .join(UserModel.rol, isouter=True))
+            .join(UserModel.role, isouter=True))
 
         result = session.execute(query)
 
         return result.unique().scalar_one_or_none()
+    
+    except:
+        Logger.add_to_system_log('error', traceback.format_exc())
+        raise ValueError("Error al comprobar la información del usuario.")
+
+def get_project_users(session: Session, project_user_filter: ProjectUsersFilter):
+    try:
+        filters = {}
+
+        if project_user_filter.user_id is not None:
+            filters["user_id"] = project_user_filter.user_id
+
+        if project_user_filter.project_role_id is not None:
+            filters["project_role_id"] = project_user_filter.project_role_id
+
+        if project_user_filter.project_id is not None:
+            filters["project_id"] = project_user_filter.project_id
+
+        if project_user_filter.active is not None:
+            filters["active"] = project_user_filter.active
+
+        query = (
+            select(ProjectUsersModel)
+            .filter_by(**filters)
+            .join(ProjectUsersModel.users, isouter=True)
+            .join(ProjectUsersModel.role, isouter=True)
+            .join(UserModel.role, isouter=True))
+
+        result = session.execute(query)
+
+        return result.unique().scalars().all()
+    
+    except:
+        Logger.add_to_system_log('error', traceback.format_exc())
+        raise ValueError("Error al comprobar la información del usuario.")
+
+def get_batch_project_users(session: Session, project_id: int):
+    try:
+        query = (select(ProjectUsersModel.user_id,
+                        Auth.mail)
+                 .join(ProjectUsersModel.users)
+                 .join(UserModel.credentials)
+                 .where(ProjectUsersModel.project_id == project_id))
+
+        result = session.execute(query)
+
+        project_users_list = result.mappings().all()
+
+        fromated_project_users = {
+            project_user["mail"]: project_user["user_id"]
+            for project_user in project_users_list
+        }
+        
+        return fromated_project_users
     
     except:
         Logger.add_to_system_log('error', traceback.format_exc())
@@ -185,9 +239,22 @@ def add_relation_user_project(session: Session, user_id: int, project_id: int, p
     except Exception as ex:
         raise ValueError(f"Error: {ex}")
 
+def add_batch_relation_user_project(session: Session, project_user_list: list[ProjectUserDto]):
+    
+    try:
+        stmt = insert(ProjectUsersModel).values(project_user_list)
+        
+        session.execute(stmt)
+
+        session.flush()
+        
+        return True
+    except Exception as ex:
+        raise ValueError(f"Error: {ex}")
+
 def update_relation_user_project(
         session: Session, 
-        project_user: UpdateProjectUserDto,
+        project_user: ProjectUserDto,
         requester_id: int):
     
     try:
@@ -206,7 +273,7 @@ def update_relation_user_project(
         query = (
             update(ProjectUsersModel)
             .where(
-                ProjectUsersModel.user_id.in_(project_user.user_ids),
+                ProjectUsersModel.user_id == project_user.user_id,
                 ProjectUsersModel.project_id == project_user.project_id,
                 ProjectUsersModel.user_id != requester_id)
             .values(**values)

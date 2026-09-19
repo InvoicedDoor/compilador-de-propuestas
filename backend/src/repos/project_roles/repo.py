@@ -45,3 +45,27 @@ def get_role_by_code(session: Session, role_code: str):
     except Exception as ex:
         Logger.add_to_system_log('error', traceback.format_exc())
         raise ValueError("Error al obtener la contraseña.")
+
+# Función para obtener todas las propuestas con varios códigos.
+def get_batch_roles_by_codes(session: Session, role_codes: list[str]):
+    try:
+        query = (select(ProjectRoleModel.id,
+                        ProjectRoleModel.code)
+                 .where(ProjectRoleModel.code.in_(role_codes)))
+
+        result = session.execute(query)
+
+        role = result.mappings()
+
+        roles_list = role.all()
+
+        formated_roles = {
+            role.code: role.id
+            for role in roles_list
+        }
+
+        return formated_roles
+
+    except Exception as ex:
+        Logger.add_to_system_log('error', traceback.format_exc())
+        raise ValueError("Error al obtener la contraseña.")

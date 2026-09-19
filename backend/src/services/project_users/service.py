@@ -1,19 +1,23 @@
 from src.repos.project_users.repo import (
-    add_relation_user_project, 
+    add_batch_relation_user_project, 
     verify_project_user, 
     get_project_users, 
+    get_batch_project_users,
     get_project_user, 
     update_relation_user_project,
     validate_project_user
 )
-from src.repos.project_roles.repo import get_role_by_code
+from src.repos.project_roles.repo import get_role_by_code, get_batch_roles_by_codes
+from src.repos.users.repo import get_bacth_user_by_mails
 from src.utilities.handlers.http_exceptions import *
 from src.utilities.logger.logger import Logger
 from src.dtos.users.dto import RequesterUserDto
 from src.dtos.project_users.dto import (
     ProjectUserDto, 
-    UpdateProjectUserDto, 
-    ProjectUsersFilter
+    ProjectUsersDto, 
+    ProjectUsersFilter,
+    AddProjectUsereDto,
+    UpdateProjectUserRoleDto
 )
 from src.utilities.db.db_connection import SessionLocal
 
@@ -56,49 +60,72 @@ def get_project_users_service(user: RequesterUserDto, project_user_filter: Proje
     finally:
         session.close()
 
-def add_project_user_service(new_user_list: list[ProjectUserDto], requester: int, project_id: int):
+def add_project_user_service(new_user_list: list[AddProjectUsereDto], requester: int, project_id: int):
     session = SessionLocal()
     try:
-        results = 0
-        roles = {}
+        roles = set()
+        user_mails = set()
+        added_user_ids = set()
+        new_users_queries = []
 
+        # Verificar que el usuario Requester pertenece al proyecto.
         is_valid = verify_project_user(session, requester, project_id)
 
         if not is_valid:
             raise BadRequest("No puedes realizar esta acción.")
 
-        requester_role = get_project_user(session, ProjectUsersFilter(user_id=requester, project_id=project_id))
+        # Verificar que el nuevo usuario no participa en el proyecto..
+        requester_role = get_project_user(session, ProjectUsersFilter(user_id=requester, project_id=project_id, active=True))
 
         if requester_role.role.code not in ("ADMIN", "COADMIN"):
             raise BadRequest("No tienes permisos para realizar esta acción.")
 
+        # Verificar que el nuevo usuario no participa en el proyecto..
         for new_user in new_user_list:
-            code = new_user["project_role"]
+            roles.add(new_user.project_role)
+            user_mails.add(new_user.mail)
 
-            if code not in roles:
-                roles[code] = get_role_by_code(session, code)
+        project_current_users = get_batch_project_users(session, project_id)
 
-            user_role = roles[code]
+        users_schedule = get_bacth_user_by_mails(session, list(user_mails))
 
-            if not user_role:
+        roles_schedule = get_batch_roles_by_codes(session, list(roles))
+
+        for new_user in new_user_list:
+            code = new_user.project_role
+            user_mail = new_user.mail
+
+            if user_mail in project_current_users:
                 continue
 
-            project_user = get_project_user(session, ProjectUsersFilter(project_id=project_id, user_id=new_user["user_id"]))
+            user_id = users_schedule.get(user_mail)["user_id"]
+            role_id = roles_schedule.get(code)
+        
+            if user_id is None or role_id is None:
+                continue
 
-            if project_user is None:
-                created = add_relation_user_project(session, new_user["user_id"], project_id, user_role)
+            if user_id in added_user_ids:
+                continue
 
-                if created:
-                    results += 1
+            added_user_ids.add(user_id)
 
-        if results > 0:
-            session.commit()
-            return f"Se agregaron {results} participantes."
+            new_users_queries.append({
+                "user_id": user_id,
+                "project_role_id": role_id,
+                "project_id": project_id
+            })
 
-        session.rollback()
+        if not new_users_queries:
+            raise Conflict("No se pueden agregar los elementos.")
 
-        raise UnprocessableEntity("El personal ya participa en el proyecto."
-        )
+        created = add_batch_relation_user_project(session, new_users_queries)
+
+        if not created:
+            raise Conflict("No es posible agregar la información.")
+                
+        session.commit()
+
+        return f"Se agregaron {len(new_users_queries)} participantes."
     
     except DomainError:
         raise 
@@ -111,7 +138,7 @@ def add_project_user_service(new_user_list: list[ProjectUserDto], requester: int
     finally:
         session.close()
 
-def update_project_user_service(update_user_list: UpdateProjectUserDto, requester: int, project_id: int):
+def update_project_user_service(update_user_dto: UpdateProjectUserRoleDto, requester: int, project_id: int):
     session = SessionLocal()
     try:
         results = 0
@@ -122,40 +149,41 @@ def update_project_user_service(update_user_list: UpdateProjectUserDto, requeste
         if not is_valid:
             raise BadRequest("No puedes realizar esta acción.")
 
-        requester_role = get_project_user(session, ProjectUsersFilter(user_id=requester, project_id=project_id))
+        requester_role = get_project_user(session, ProjectUsersFilter(user_id=requester, project_id=project_id, active=True))
 
         if requester_role.role.code not in ("ADMIN", "COADMIN"):
             raise BadRequest("No tienes permisos para realizar esta acción.")
 
-        for update_user in update_user_list:
-            code = update_user["project_role"]
+        code = update_user_dto.project_role
 
-            if code not in roles:
-                roles[code] = get_role_by_code(session, code)
+        if code not in roles:
+            roles[code] = get_role_by_code(session, code)
 
-            user_role = roles[code]
+        user_role = roles[code]
 
-            if not user_role:
-                continue
+        if not user_role:
+            raise BadRequest("No puedes usar este rol.")
 
-            project_user = get_project_user(session, ProjectUsersFilter(project_id=project_id, user_id=update_user["user_id"]))
+        project_user = get_project_user(session, ProjectUsersFilter(project_id=project_id, user_id=update_user_dto.user_id, active=True))
 
-            if project_user is None:
-                continue
+        if project_user is None:
+            raise BadRequest("El usuario no participa en el proyecto.")
 
-            updated = update_relation_user_project(session, project_id, update_user)
-
-            if updated:
-                results += 1
-
-        if results > 0:
-            session.commit()
-            return f"Se actualizaron {results} participantes."
-
-        session.rollback()
-
-        raise UnprocessableEntity("El personal no participa en el proyecto."
+        update_user = ProjectUserDto(
+            project_id=project_id,
+            user_id=update_user_dto.user_id,
+            project_role_id=user_role,
+            active=True
         )
+
+        updated = update_relation_user_project(session, update_user, requester)
+
+        if not updated:
+            session.rollback()
+            raise Conflict("No se ha actualizado el recurso.")
+
+        session.commit()
+        return f"Se actualizó correctamente."
     
     except DomainError:
         raise 
@@ -184,7 +212,7 @@ def inactive_project_user_service(requester: RequesterUserDto, project_id, inact
         if not requester_is_admin:
             raise BadRequest("No puedes realizar esta acción. No eres administrador del proyecto.")
 
-        to_inactive_request = UpdateProjectUserDto(
+        to_inactive_request = ProjectUsersDto(
             user_ids=inactive_project_users, project_id=project_id,
             active=False
         )

@@ -6,17 +6,25 @@ class ProjectUserDto(BaseModel):
     user_id: int = Field(None)
     project_role_id: int = Field(None)
     project_id: int = Field(None)
-    active: bool = Field(None)
+    active: bool = Field(False)
 
 class ProjectUsersFilter(ProjectUserDto):
     id: int = Field(None)
 
-class UpdateProjectUserDto(BaseModel):
+class ProjectUsersDto(BaseModel):
     user_ids: list[int] = Field(None)
     project_role_id: int = Field(None)
     project_id: int = Field(None)
     active: bool = Field(None)
 
+class UpdateProjectUserRoleDto(BaseModel):
+    user_id: int
+    project_role: str
+
+class AddProjectUsereDto(BaseModel):
+    mail: str
+    project_role: str
+    
 class ProjectUserResDto(BaseModel):
     id: int = Field(...)
     name: str = Field(...)
@@ -24,7 +32,10 @@ class ProjectUserResDto(BaseModel):
     rol: UserRoleDto = Field(...)
 
 class ProjectUserRequestBody(BaseModel):
-    users: list[UpdateProjectUserDto]
+    users: list[ProjectUsersDto]
+
+class AddProjectUserRequestBody(BaseModel):
+    users: list[AddProjectUsereDto]
 
 class DeleteProjectUsersDto(BaseModel):
     user_id: int

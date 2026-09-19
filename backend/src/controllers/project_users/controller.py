@@ -1,14 +1,14 @@
 from src.services.project_users.service import (
     get_project_users_service,
     add_project_user_service,
+    update_project_user_service,
     inactive_project_user_service)
 from src.dtos.project_users.dto import ( 
     ProjectUsersFilter,
-    UpdateProjectUserDto,
-    DeleteProjectUsersDto,
-    DeleteProjectUsersBody)
+    UpdateProjectUserRoleDto,
+    AddProjectUserRequestBody,
+    DeleteProjectUsersDto)
 from src.dtos.users.dto import RequesterUserDto
-from src.dtos.project_users.dto import ProjectUserRequestBody
 from src.utilities.logger.logger import Logger
 from src.utilities.middlewares.veryfy_authentication import verify_authentication
 from src.utilities.handlers.http_exceptions import (
@@ -44,10 +44,10 @@ def get_project_users_controller(
 @project_users_routes.post('/{project_id}')
 def add_project_users_controller(
     project_id: int = Path(..., gt=0),
-    users_list: list[ProjectUserRequestBody] = Body(...),
+    users_list: AddProjectUserRequestBody = Body(...),
     requester: RequesterUserDto = Depends(verify_authentication)):
     try:
-        res = add_project_user_service(users_list, requester.id, project_id)
+        res = add_project_user_service(users_list.users, requester.id, project_id)
 
         return Created(res).to_response()
     
@@ -61,11 +61,11 @@ def add_project_users_controller(
 # Update project users
 @project_users_routes.patch('/{project_id}')
 def update_project_users_controller(
-    users_list: UpdateProjectUserDto = Body(...),
+    user_update: UpdateProjectUserRoleDto = Body(...),
     project_id: int = Path(..., gt=0),
     requester: RequesterUserDto = Depends(verify_authentication)):
     try:
-        res = add_project_user_service(users_list, requester.id, project_id)
+        res = update_project_user_service(user_update, requester.id, project_id)
 
         return Created(res).to_response()
     

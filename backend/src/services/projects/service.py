@@ -89,9 +89,6 @@ def get_project_by_id_service(user: RequesterUserDto, project_id: int):
 
         project_events = get_status_events(session, filter_events_status)
 
-        for event in project_events:
-            print(event.name)
-
         formated_project = {
             "id": project.id,
             "title": project.title,
