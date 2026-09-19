@@ -1,7 +1,7 @@
 from src.utilities.middlewares.verify_files import verify_extension, verify_mime, clean_name, create_secure_name
-from src.dtos.project_dto import ProjectFilesDto
-from src.dtos.file_type_dto import MimeTypeDto
-from src.repos.file_type_repo import get_file_type_by_filter
+from src.dtos.project_files.dto import ProjectFilesDto
+from src.dtos.mime_tipes.dto import MimeTypeDto
+from src.repos.file_tipes.repo import get_file_type_by_filter
 from src.utilities.files_manager.files_manager import process_file, write_files_function
 from src.utilities.handlers.http_exceptions import *
 from src.utilities.logger.logger import Logger
@@ -13,7 +13,7 @@ load_dotenv()
 
 documentation_path = getenv("SAVE_FILES_PATH")
 
-def upload_files(session: Session = None, proposal_files: list = [], project_id: int = 0):
+async def upload_files(session: Session = None, proposal_files: list = [], project_id: int = 0):
     try:
         write_files_results = []
         proposal_files_dto = []
@@ -22,19 +22,20 @@ def upload_files(session: Session = None, proposal_files: list = [], project_id:
             file_saved = False
             verify_extension(file, "La propuesta se creó con éxito pero no se cargaron los archivos.")
 
-            file_bytes = file.read()
+            file_bytes = await file.read()
 
-            mime = verify_mime(file)
+            mime = verify_mime(file_bytes)
 
             if not file_bytes:
                 raise BadRequest("Archivo vacío.")
                 
             file_type = get_file_type_by_filter(session, MimeTypeDto(mime_pattern=mime))
 
+            if not file_type:
+                raise BadRequest("Archivos con formatos inválidos.")
+
             filename = clean_name(file)
             secure_name = create_secure_name(filename)
-
-            print(secure_name)
 
             if len(filename) > 50:
                 write_files_results.append({"status": False,"filename": filename})

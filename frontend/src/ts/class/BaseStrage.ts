@@ -4,7 +4,7 @@ export default class BaseStorage<K extends object>
 {
     private readonly listeners = new Set<StoreListener<K>>();
 
-    public readonly store: K;
+    public store: K;
 
     public readonly clearStore: () => void;
     

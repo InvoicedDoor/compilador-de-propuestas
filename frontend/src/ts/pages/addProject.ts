@@ -204,7 +204,7 @@ const handleSendProject = async (event: Event): Promise<void> => {
             body.append("project_documentation", file);
         });
 
-        const res = await uploadInfo("project", token, body);
+        const res = await uploadInfo("projects", token, body);
         const result = await res.json();
 
         if (!res.ok) {

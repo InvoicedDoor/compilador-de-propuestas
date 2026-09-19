@@ -6,8 +6,6 @@ export const leftBarComponent = () => {
     {
         const projectEvents = projectInfoStore.store.project_events;
 
-        console.log(projectEvents)
-
         // Obtener la sección de la barra lateral izquierda.
         const leftBarContainer = document.getElementById("left-bar");
         
@@ -43,6 +41,8 @@ export const leftBarComponent = () => {
                 /* ==================== Event row container ==================== */
                 const eventRow = document.createElement("div");
                 eventRow.className = "event-row";
+                eventRow.onmouseenter = (event: MouseEvent) => hoverUserInformation(event);
+                eventRow.onmouseleave = (event: MouseEvent) => leaveHoverUserInformation(event);
                 
                 /* ===================== Username field ===================== */
                 const usernameEventParagraph = document.createElement("p");
@@ -73,9 +73,7 @@ export const leftBarComponent = () => {
                 /* ===================== Modal space ===================== */
                 const modalInfoSection = document.createElement("div");
                 modalInfoSection.className = "modal-space";
-                modalInfoSection.id = "modal-event-info";
-                modalInfoSection.onmouseenter = (event: MouseEvent) => hoverUserInformation(event);
-                modalInfoSection.onmouseleave = (event: MouseEvent) => leaveHoverUserInformation(event);
+                modalInfoSection.id = `modal-event-info-${projectEvents[event]}`;
                 bodyLeftBar.appendChild(eventRow);
                 bodyLeftBar.appendChild(modalInfoSection);
             }
@@ -102,9 +100,6 @@ window.leftBarComponent = leftBarComponent;
 
 /* ===================== EVENTS ===================== */
 const hoverUserInformation = (event: MouseEvent): void => {
-    console.log("Evento realizado.")
-    console.log(event)
-
     return
 
     // const container = document.getElementById(`modal-event-info-${event.target.id}`);

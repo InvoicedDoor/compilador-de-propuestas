@@ -11,7 +11,7 @@ import { showToast } from "../components/modal/notifications.js";
 import { pageIndexList, validatePaginationToHiddeArrows } from "../components/element/pageIndexList.js";
 import projectInfoStore from "../storages/projectInfoStorage.js";
 import { leftBarComponent } from "../components/section/leftBar.js";
-
+import invitationStore from "../storages/invitationsStorage.js";
 /* ===================== AUTH ===================== */
 
 const token: string = localStorage.getItem("token") ?? "";
@@ -37,7 +37,6 @@ const projectFiles = document.getElementById("file-list-element");
 const selectedFiles: File[] = [];
 const metadatos: Metadata[] = [];
 const previewUrls: Preview[] = [];
-
 
 let projectTitle: string = "";
 let projectDescription: string = "";
@@ -138,7 +137,7 @@ const chargeFileList = async (startCount: number, endCount: number) => {
 }
 
 const getFiles = async () => {
-    const projectFilesRow = await getInfo(`project/project-files/${projectId}`, token);
+    const projectFilesRow = await getInfo(`project-files/${projectId}`, token);
     const filesJson = await projectFilesRow.json();
     filesInfo = filesJson["data"];
 }
@@ -342,7 +341,7 @@ const handleDeleteFile = async (projectId: number, fileId: number) => {
             value: fileId
         }
     ]
-    const res = await deleteInfo("project/project-files", token, null, queryStringArgs)
+    const res = await deleteInfo("project-files", token, null, queryStringArgs)
 
     const resJson = await res.json()
     if (!res.ok)
@@ -395,7 +394,7 @@ const handleUploadFiles = async (event: Event): Promise<void> => {
             requestBody.append("project_documentation", file);
         });
 
-        const res = await uploadInfo(`project/${projectId}`, token, requestBody);
+        const res = await uploadInfo(`projects/${projectId}`, token, requestBody);
 
         const jsonResult = await res.json();
 
@@ -415,13 +414,43 @@ const handleUploadFiles = async (event: Event): Promise<void> => {
     }
 }
 
+const handleSendInvitations = async (event: Event) => {
+    try 
+    {
+        const bodyRequest = invitationStore.store
+        if (bodyRequest.users.length < 1)
+        {
+            showToast("No hay archivos cargados.", "warning")
+            return;
+        }
+
+        const res = await uploadInfo(`project-users/${projectId}`, token, bodyRequest);
+
+        const jsonResult = await res.json();
+
+        if (!res.ok)
+        {
+            invitationStore.invitationActions.destroy();
+            showToast(jsonResult.message, "warning");
+            return
+        }
+            
+        showToast("Archivos cargados correctamente.", "success");
+        invitationStore.invitationActions.destroy();
+        location.reload();
+    } catch
+    {
+        showToast("Error al enviar las invitaciones. Informe a soporte técnico.", "error")
+    }
+}
+
 (async () => {
     document.title = `Proyecto ${projectId}`;
     let startCount = FILES_PER_PAGE * (filePage - 1);
     let endCount = filePage * FILES_PER_PAGE;
     
-    const projectInfoRow = await getInfo(`project/${projectId}`, token);
-    const projectMembersRow = await getInfo(`project/project-users/${projectId}`, token);
+    const projectInfoRow = await getInfo(`projects/${projectId}`, token);
+    const projectMembersRow = await getInfo(`project-users/${projectId}`, token);
     await getFiles();
 
     const data = await getInfo("file-tipes", token)
@@ -458,9 +487,7 @@ const handleUploadFiles = async (event: Event): Promise<void> => {
 
     membersInfo.map((member: UserMemberInterface) => {
         let rowMember = userMemberRow(member);
-        let rowMemberCopy = userMemberRow(member);
         userMembersTable?.appendChild(rowMember);
-        userMembersTable?.appendChild(rowMemberCopy);
     });
 
     const orderedList = await chargeFileList(startCount, endCount);
@@ -487,6 +514,7 @@ declare global {
         handleChangePageIndex: (numberPage: number) => void;
         changeFilePage: (page: number) => void;
         handleUploadFiles: (event: Event) => void;
+        handleSendInvitations: (event: Event) => void;
         handleSendProject: (event: Event) => void;
         handleInputTitle: (event: Event) => void;
         handleInputDescription: (event: Event) => void;
@@ -497,4 +525,5 @@ window.handleInputTitle = handleInputTitle;
 window.handleInputDescription = handleInputDescription;
 window.handleUploadFiles = handleUploadFiles;
 window.changeFilePage = changeFilePage;
+window.handleSendInvitations = handleSendInvitations;
 window.handleChangePageIndex = handleChangePageIndex;

@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from os import makedirs
 
 STATIC_FILES_PATH = "./files"
+
 app = FastAPI(root_path="/api")
 
 origins = ["*"]

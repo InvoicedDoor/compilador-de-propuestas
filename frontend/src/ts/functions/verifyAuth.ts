@@ -15,5 +15,5 @@ export const verifyAuth = async (token: string) =>
 
     const jsonData = jsonResponse["data"];
 
-    userStore.userActions.login(jsonData["name"], jsonData["rol"]);
+    userStore.userActions.login(jsonData["name"], jsonData["role"]);
 }

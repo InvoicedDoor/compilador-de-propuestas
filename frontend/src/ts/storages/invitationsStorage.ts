@@ -1,26 +1,31 @@
 import BaseStorage from "../class/BaseStrage.js";
 
-export interface InvitationState {
-    id: number
-    mail: string
+export interface InvitationInterface {
+    mail: string;
+    project_role: string;
 }
 
-class InvitationStorage extends BaseStorage<Array<InvitationState>> {
-    private invitationCounter: number;
+interface InvitationState {
+    users: InvitationInterface[];
+}
+
+class InvitationStorage extends BaseStorage<InvitationState> {
     constructor() {
-        super("invitations_store", []);
-        this.invitationCounter = this.store.reduce(
-            (max, invitation) =>
-                Math.max(max, invitation.id),
-            0
-        );
+        super("invitations_store", {
+            users: []
+        });
+        this.store.users = []
     }
 
     public invitationActions = {
-        addRecipient: (recipient: InvitationState): void => {
-                const id = ++ this.invitationCounter;
-                recipient.id = id;
-                this.store.push(recipient);
+        addUser: (user: InvitationInterface): void => {
+            this.store.users.push(user);
+        },
+        deleteUser: (mail: string): void => {
+            this.store.users = this.store.users.filter(user => user.mail !== mail)
+        },
+        destroy: (): void => {
+            this.store.users = []
         }
     };
 

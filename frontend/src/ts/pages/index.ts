@@ -43,7 +43,7 @@ function getProjectInfo(cardId: number) {
 
 /* ===================== DATA ===================== */
 (async () => {
-    const response: Response = await getInfo("project", token);
+    const response: Response = await getInfo("projects", token);
     const dataJson: ApiResponse<CardData[]> = await response.json();
 
     // Limpia el contenedor

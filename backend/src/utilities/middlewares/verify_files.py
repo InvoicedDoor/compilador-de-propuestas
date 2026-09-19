@@ -1,5 +1,6 @@
 from src.utilities.handlers.http_exceptions import BadRequest
 import magic, os, uuid
+from fastapi import UploadFile
 
 ALLOWED_EXTENSIONS = {
     "pdf", "docx", "xlsx", "png", "jpg", "jpeg", "txt"
@@ -22,9 +23,10 @@ def verify_extension(file, complementary_message = None):
 
 
 def verify_mime(file):
-    file.seek(0)
-    mime = magic.from_buffer(file.read(2048), mime=True)
-    file.seek(0)
+    mime = magic.from_buffer(
+        file,
+        mime=True
+    )
 
     if mime in BLOCKED_TYPES:
         raise BadRequest("Tipo MIME bloqueado.")

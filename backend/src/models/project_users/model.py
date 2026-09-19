@@ -27,6 +27,6 @@ class ProjectUsersModel(Base):
         lazy="joined"
     )
     project_events: Mapped[list["ProjectEventModel"]] = relationship( # pyright: ignore[reportUndefinedVariable]
-        back_populates="project_event",
+        back_populates="project_user",
         lazy="joined"
     )

@@ -3,13 +3,11 @@ from .credentials.model import Auth
 from .departments.model import DepartmentModel
 from .file_tipes.model import FileTypeModel
 from .mime_categories.model import MimeCategoryModel
-from .users.model import UserModel
 from .mime_tipes.model import MimeTypeModel
-from .projects.model import ProjectModel
-from .project_files.model import ProjectFilesModel
 from .project_events.model import ProjectEventModel
-from .project_users.model import ProjectUsersModel
+from .project_files.model import ProjectFilesModel
 from .project_roles.model import ProjectRoleModel
-from .project_status.model import ProjectStatusModel
 from .project_users.model import ProjectUsersModel
+from .project_status.model import ProjectStatusModel
+from .projects.model import ProjectModel
 from .users.model import UserModel

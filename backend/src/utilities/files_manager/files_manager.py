@@ -1,5 +1,5 @@
-from src.repos.project_repo import add_project_files
-from src.dtos.project_dto import ProjectFilesDto
+from src.repos.project_files.repo import add_project_files
+from src.dtos.project_files.dto import ProjectFilesDto
 from werkzeug.datastructures import FileStorage
 from src.utilities.logger.logger import Logger
 from sqlalchemy.orm import Session

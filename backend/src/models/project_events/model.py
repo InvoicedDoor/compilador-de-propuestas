@@ -12,7 +12,7 @@ class ProjectEventModel(Base):
     approved: Mapped[bool] = mapped_column(Boolean, default=False)
     active: Mapped[bool] = mapped_column(Boolean, default=True)
 
-    project_event: Mapped["ProjectUsersModel"] = relationship( # pyright: ignore[reportUndefinedVariable]
+    project_user: Mapped["ProjectUsersModel"] = relationship( # pyright: ignore[reportUndefinedVariable]
         back_populates="project_events",
         lazy="joined"
     )

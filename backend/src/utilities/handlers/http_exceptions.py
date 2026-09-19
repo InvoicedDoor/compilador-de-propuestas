@@ -19,8 +19,18 @@ class DomainError(Exception):
 
         self.data = data
 
-    def to_dict(self):
+    def to_log_format(self):
 
+        response = {
+            "message": self.message
+        }
+
+        if self.data is not None:
+            response["data"] = self.data
+
+            return f"Codigo: {self.status_code}. {self.message}"
+
+    def to_dict(self):
         response = {
             "message": self.message
         }

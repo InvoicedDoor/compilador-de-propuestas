@@ -4,8 +4,14 @@
 
 .invite-users-container {
     border: solid #555;
-    height: 250px;
+    min-height: 500px;
     padding: 30px;
+}
+
+.input-add-invitation {
+    display: flex;
+    flex-direction: row;
+    height: 45px;
 }
 
 .input-group {
@@ -14,21 +20,40 @@
     margin-bottom: 1rem;
 }
 
+.input-group {
+    font-size: 16px;
+}
+
+.select-user-role {
+    height: 100%;
+    background-color: #3c3c3c;
+    color: #e0e0e0;
+    border-color: transparent;
+    font-size: 16px;
+}
+
 .show-new-collaborators-mail {
-    height: 65%;
+    height: 200px;
     width: 100%;
     border: #444 solid 1px;
     padding: 10px;
+    background-color: #3c3c3c;
 }
 
 .mail-input {
-    width: 90%;
+    width: 100%;
+    height: 100%;
+    background-color: #3c3c3c;
+    border-width: 0;
+}
+
+.size-10 {
+    width: 10%;
 }
 
 .add-invitation-button {
-    width: 10%;
-    border-radius: 0;
     background-color: #4caf50;
+    border-radius: 0;
     color: white;
     border: none;
     padding: 5px;
@@ -45,9 +70,8 @@
     background-color: #255527;
 }
 
-.input-add-invitation {
-    display: flex;
-    flex-direction: row;
+.ipnut-container-color {
+    background-color: #3c3c3c;
 }
 
 input {
@@ -61,4 +85,8 @@ input {
 input:focus {
     outline: none;
     border-color: #4caf50;
+}
+
+input::placeholder {
+    font-size: 16px;
 }

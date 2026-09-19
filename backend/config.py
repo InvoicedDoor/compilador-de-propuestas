@@ -27,6 +27,8 @@ APPROVAL_STEPS = json_config["steps"]
 
 ROLE_APPROVER_PROJECT = json_config["role_approver_project"]
 
+MAX_SIZE = 5 * 1024 * 1024
+
 ALTERNATIVE_STATUS = []
 
 CLOSER_STATUS = []

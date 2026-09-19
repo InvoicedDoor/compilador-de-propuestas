@@ -1,5 +1,5 @@
 from pydantic import Field, BaseModel
 
 class ProjectRoleDto(BaseModel):
-    id: str
-    position: str
+    code: str = Field(None)
+    position: str = Field(None)

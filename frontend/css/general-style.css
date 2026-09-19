@@ -38,6 +38,26 @@ h4 {
     width: 100%;
 }
 
+.display-flex {
+    display: flex;
+}
+
+.justify-content-center {
+    justify-content: center;
+}
+
+.align-items-center {
+    align-items: center;
+}
+
+.size-adjust-full-content {
+    width: 100%;
+}
+
+.size-height-30 {
+    height: 30px;
+}
+
 .plus-icon {
     background-image: url("/icons/plus.svg");
 }

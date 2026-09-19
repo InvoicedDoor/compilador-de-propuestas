@@ -1,3 +1,4 @@
+from src.dtos.users.dto import RequesterUserDto
 from fastapi.requests import Request
 from fastapi import HTTPException
 import jwt
@@ -33,9 +34,9 @@ async def verify_authentication(request: Request):
             algorithms=["HS256"]
         )
 
-        request.state.user = decoded_token
+        request.state.user = RequesterUserDto(**decoded_token)
 
-        return decoded_token
+        return RequesterUserDto(**decoded_token)
 
     except jwt.ExpiredSignatureError:
         raise HTTPException(
